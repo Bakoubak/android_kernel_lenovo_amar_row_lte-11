@@ -4,6 +4,8 @@
 
 #if defined(CONFIG_AS_LSE) && defined(CONFIG_ARM64_LSE_ATOMICS)
 
+#define __LSE_PREAMBLE	".arch armv8-a+lse\n"
+
 #include <linux/compiler_types.h>
 #include <linux/export.h>
 #include <linux/stringify.h>
@@ -20,13 +22,6 @@
 
 #else	/* __ASSEMBLER__ */
 
-#ifdef CONFIG_LTO_CLANG
-#define __LSE_PREAMBLE	".arch_extension lse\n"
-#else
-__asm__(".arch_extension	lse");
-#define __LSE_PREAMBLE
-#endif
-
 /* Move the ll/sc atomics out-of-line */
 #define __LL_SC_INLINE		notrace
 #define __LL_SC_PREFIX(x)	__ll_sc_##x
@@ -37,10 +32,8 @@ __asm__(".arch_extension	lse");
 #define __LL_SC_CLOBBERS	"x16", "x17", "x30"
 
 /* In-line patching at runtime */
-#define ARM64_LSE_ATOMIC_INSN(llsc, lse)				\
-	ALTERNATIVE(llsc,						\
-		    ".arch_extension lse\n" lse,			\
-		    ARM64_HAS_LSE_ATOMICS)
+#define ARM64_LSE_ATOMIC_INSN(llsc, lse)		\
+	ALTERNATIVE(llsc, __LSE_PREAMBLE lse, ARM64_HAS_LSE_ATOMICS)
 
 #endif	/* __ASSEMBLER__ */
 #else	/* CONFIG_AS_LSE && CONFIG_ARM64_LSE_ATOMICS */
