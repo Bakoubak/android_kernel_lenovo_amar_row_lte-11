@@ -495,10 +495,6 @@ struct entropy_store {
 	const struct poolinfo *poolinfo;
 	__u32 *pool;
 	const char *name;
-<<<<<<< HEAD
-=======
-	struct entropy_store *pull;
->>>>>>> 7acf48b4a85d (random: remove the blocking pool)
 
 	/* read-write data: */
 	spinlock_t lock;
