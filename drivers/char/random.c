@@ -495,6 +495,10 @@ struct entropy_store {
 	const struct poolinfo *poolinfo;
 	__u32 *pool;
 	const char *name;
+<<<<<<< HEAD
+=======
+	struct entropy_store *pull;
+>>>>>>> 7acf48b4a85d (random: remove the blocking pool)
 
 	/* read-write data: */
 	spinlock_t lock;
@@ -715,10 +719,13 @@ retry:
 		entropy_count = 0;
 	} else if (entropy_count > pool_size)
 		entropy_count = pool_size;
+<<<<<<< HEAD
 
 	if (!r->initialized && (entropy_count >> ENTROPY_SHIFT) > 128)
 		has_initialized = 1;
 
+=======
+>>>>>>> 7acf48b4a85d (random: remove the blocking pool)
 	if (cmpxchg(&r->entropy_count, orig, entropy_count) != orig)
 		goto retry;
 
