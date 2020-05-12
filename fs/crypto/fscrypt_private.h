@@ -578,8 +578,11 @@ extern struct key *
 fscrypt_find_master_key(struct super_block *sb,
 			const struct fscrypt_key_specifier *mk_spec);
 
+extern int fscrypt_add_test_dummy_key(struct super_block *sb,
+			       struct fscrypt_key_specifier *key_spec);
+
 extern int fscrypt_verify_key_added(struct super_block *sb,
-				    const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
+			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
 
 extern int __init fscrypt_init_keyring(void);
 
