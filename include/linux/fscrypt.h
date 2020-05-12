@@ -15,12 +15,15 @@
 
 #include <linux/fs.h>
 #include <linux/mm.h>
+#include <linux/parser.h>
 #include <linux/slab.h>
 #include <uapi/linux/fscrypt.h>
 
 #define FS_CRYPTO_BLOCK_SIZE		16
 
+union fscrypt_context;
 struct fscrypt_info;
+struct seq_file;
 
 struct fscrypt_str {
 	unsigned char *name;
@@ -56,10 +59,12 @@ struct fscrypt_name {
 struct fscrypt_operations {
 	unsigned int flags;
 	const char *key_prefix;
-	int (*get_context)(struct inode *, void *, size_t);
-	int (*set_context)(struct inode *, const void *, size_t, void *);
-	bool (*dummy_context)(struct inode *);
-	bool (*empty_dir)(struct inode *);
+	int (*get_context)(struct inode *inode, void *ctx, size_t len);
+	int (*set_context)(struct inode *inode, const void *ctx, size_t len,
+			   void *fs_data);
+	const union fscrypt_context *(*get_dummy_context)(
+		struct super_block *sb);
+	bool (*empty_dir)(struct inode *inode);
 	unsigned int max_namelen;
 	bool (*has_stable_inodes)(struct super_block *sb);
 	void (*get_ino_and_lblk_bits)(struct super_block *sb,
@@ -91,10 +96,12 @@ static inline bool fscrypt_needs_contents_encryption(const struct inode *inode)
 	return IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode);
 }
 
-static inline bool fscrypt_dummy_context_enabled(struct inode *inode)
+static inline const union fscrypt_context *
+fscrypt_get_dummy_context(struct super_block *sb)
 {
-	return inode->i_sb->s_cop->dummy_context &&
-		inode->i_sb->s_cop->dummy_context(inode);
+	if (!sb->s_cop->get_dummy_context)
+		return NULL;
+	return sb->s_cop->get_dummy_context(sb);
 }
 
 /*
@@ -170,13 +177,30 @@ extern void fscrypt_free_bounce_page(struct page *bounce_page);
 extern int fscrypt_d_revalidate(struct dentry *dentry, unsigned int flags);
 
 /* policy.c */
-extern int fscrypt_ioctl_set_policy(struct file *, const void __user *);
-extern int fscrypt_ioctl_get_policy(struct file *, void __user *);
-extern int fscrypt_ioctl_get_policy_ex(struct file *, void __user *);
-extern int fscrypt_ioctl_get_nonce(struct file *filp, void __user *arg);
-extern int fscrypt_has_permitted_context(struct inode *, struct inode *);
-extern int fscrypt_inherit_context(struct inode *, struct inode *,
-					void *, bool);
+int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg);
+int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg);
+int fscrypt_ioctl_get_policy_ex(struct file *filp, void __user *arg);
+int fscrypt_ioctl_get_nonce(struct file *filp, void __user *arg);
+int fscrypt_has_permitted_context(struct inode *parent, struct inode *child);
+int fscrypt_inherit_context(struct inode *parent, struct inode *child,
+			    void *fs_data, bool preload);
+
+struct fscrypt_dummy_context {
+	const union fscrypt_context *ctx;
+};
+
+int fscrypt_set_test_dummy_encryption(struct super_block *sb,
+				      const substring_t *arg,
+				      struct fscrypt_dummy_context *dummy_ctx);
+void fscrypt_show_test_dummy_encryption(struct seq_file *seq, char sep,
+					struct super_block *sb);
+static inline void
+fscrypt_free_dummy_context(struct fscrypt_dummy_context *dummy_ctx)
+{
+	kfree(dummy_ctx->ctx);
+	dummy_ctx->ctx = NULL;
+}
+
 /* keyring.c */
 extern void fscrypt_sb_free(struct super_block *sb);
 extern int fscrypt_ioctl_add_key(struct file *filp, void __user *arg);
@@ -254,9 +278,10 @@ static inline bool fscrypt_needs_contents_encryption(const struct inode *inode)
 	return false;
 }
 
-static inline bool fscrypt_dummy_context_enabled(struct inode *inode)
+static inline const union fscrypt_context *
+fscrypt_get_dummy_context(struct super_block *sb)
 {
-	return false;
+	return NULL;
 }
 
 static inline void fscrypt_handle_d_move(struct dentry *dentry)
@@ -354,6 +379,20 @@ static inline int fscrypt_inherit_context(struct inode *parent,
 					  void *fs_data, bool preload)
 {
 	return -EOPNOTSUPP;
+}
+
+struct fscrypt_dummy_context {
+};
+
+static inline void fscrypt_show_test_dummy_encryption(struct seq_file *seq,
+						      char sep,
+						      struct super_block *sb)
+{
+}
+
+static inline void
+fscrypt_free_dummy_context(struct fscrypt_dummy_context *dummy_ctx)
+{
 }
 
 /* keyring.c */
@@ -813,7 +852,7 @@ static inline int fscrypt_prepare_symlink(struct inode *dir,
 					  unsigned int max_len,
 					  struct fscrypt_str *disk_link)
 {
-	if (IS_ENCRYPTED(dir) || fscrypt_dummy_context_enabled(dir))
+	if (IS_ENCRYPTED(dir) || fscrypt_get_dummy_context(dir->i_sb) != NULL)
 		return __fscrypt_prepare_symlink(dir, len, max_len, disk_link);
 
 	disk_link->name = (unsigned char *)target;

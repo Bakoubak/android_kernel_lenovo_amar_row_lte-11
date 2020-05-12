@@ -202,6 +202,7 @@ static match_table_t f2fs_tokens = {
 	{Opt_whint, "whint_mode=%s"},
 	{Opt_alloc, "alloc_mode=%s"},
 	{Opt_fsync, "fsync_mode=%s"},
+	{Opt_test_dummy_encryption, "test_dummy_encryption=%s"},
 	{Opt_test_dummy_encryption, "test_dummy_encryption"},
 	{Opt_inlinecrypt, "inlinecrypt"},
 	{Opt_checkpoint_disable, "checkpoint=disable"},
@@ -450,11 +451,10 @@ static int f2fs_set_test_dummy_encryption(struct super_block *sb,
 		return -EINVAL;
 	}
 	f2fs_warn(sbi, "Test dummy encryption mode enabled");
-	return 0;
 #else
-	f2fs_warn(sbi, "test_dummy_encryption option not supported");
-	return -EINVAL;
+	f2fs_warn(sbi, "Test dummy encryption mount option ignored");
 #endif
+	return 0;
 }
 
 #ifdef CONFIG_F2FS_FS_COMPRESSION
@@ -481,13 +481,17 @@ static int f2fs_test_compress_extension(struct f2fs_sb_info *sbi)
 
 	for (no_index = 0; no_index < noext_cnt; no_index++) {
 		if (!strcasecmp("*", noext[no_index])) {
-			f2fs_info(sbi, "Don't allow the nocompress extension specifies all files");
+			f2fs_info(
+				sbi,
+				"Don't allow the nocompress extension specifies all files");
 			return -EINVAL;
 		}
 		for (index = 0; index < ext_cnt; index++) {
 			if (!strcasecmp(ext[index], noext[no_index])) {
-				f2fs_info(sbi, "Don't allow the same extension %s appear in both compress and nocompress extension",
-						ext[index]);
+				f2fs_info(
+					sbi,
+					"Don't allow the same extension %s appear in both compress and nocompress extension",
+					ext[index]);
 				return -EINVAL;
 			}
 		}
@@ -562,7 +566,7 @@ static int f2fs_set_zstd_level(struct f2fs_sb_info *sbi, const char *str)
 #endif
 #endif
 
-static int parse_options(struct super_block *sb, char *options)
+static int parse_options(struct super_block *sb, char *options, bool is_remount)
 {
 	struct f2fs_sb_info *sbi = F2FS_SB(sb);
 	substring_t args[MAX_OPT_ARGS];
@@ -571,9 +575,7 @@ static int parse_options(struct super_block *sb, char *options)
 	int arg = 0, ext_cnt;
 	kuid_t uid;
 	kgid_t gid;
-#ifdef CONFIG_QUOTA
 	int ret;
-#endif
 
 	if (!options)
 		return 0;
@@ -946,17 +948,10 @@ static int parse_options(struct super_block *sb, char *options)
 			kvfree(name);
 			break;
 		case Opt_test_dummy_encryption:
-#ifdef CONFIG_FS_ENCRYPTION
-			if (!f2fs_sb_has_encrypt(sbi)) {
-				f2fs_err(sbi, "Encrypt feature is off");
-				return -EINVAL;
-			}
-
-			F2FS_OPTION(sbi).test_dummy_encryption = true;
-			f2fs_info(sbi, "Test dummy encryption mode enabled");
-#else
-			f2fs_info(sbi, "Test dummy encryption mount option ignored");
-#endif
+			ret = f2fs_set_test_dummy_encryption(sb, p, &args[0],
+							     is_remount);
+			if (ret)
+				return ret;
 			break;
 		case Opt_inlinecrypt:
 #ifdef CONFIG_FS_ENCRYPTION_INLINE_CRYPT
@@ -1392,6 +1387,7 @@ static void f2fs_put_super(struct super_block *sb)
 	for (i = 0; i < MAXQUOTAS; i++)
 		kvfree(F2FS_OPTION(sbi).s_qf_names[i]);
 #endif
+	fscrypt_free_dummy_context(&F2FS_OPTION(sbi).dummy_enc_ctx);
 	destroy_percpu_info(sbi);
 	for (i = 0; i < NR_PAGE_TYPE; i++)
 		kvfree(sbi->write_io[i]);
@@ -1723,12 +1719,11 @@ static int f2fs_show_options(struct seq_file *seq, struct dentry *root)
 		seq_printf(seq, ",whint_mode=%s", "user-based");
 	else if (F2FS_OPTION(sbi).whint_mode == WHINT_MODE_FS)
 		seq_printf(seq, ",whint_mode=%s", "fs-based");
-#ifdef CONFIG_FS_ENCRYPTION
-	if (F2FS_OPTION(sbi).test_dummy_encryption)
-		seq_puts(seq, ",test_dummy_encryption");
-	if (F2FS_OPTION(sbi).inlinecrypt)
-		seq_puts(seq, ",inlinecrypt");
-#endif
+	#ifdef CONFIG_FS_ENCRYPTION
+		fscrypt_show_test_dummy_encryption(seq, ',', sbi->sb);
+		if (F2FS_OPTION(sbi).inlinecrypt)
+			seq_puts(seq, ",inlinecrypt");
+	#endif
 
 	if (F2FS_OPTION(sbi).alloc_mode == ALLOC_MODE_DEFAULT)
 		seq_printf(seq, ",alloc_mode=%s", "default");
@@ -1757,7 +1752,6 @@ static void default_options(struct f2fs_sb_info *sbi)
 	F2FS_OPTION(sbi).whint_mode = WHINT_MODE_OFF;
 	F2FS_OPTION(sbi).alloc_mode = ALLOC_MODE_DEFAULT;
 	F2FS_OPTION(sbi).fsync_mode = FSYNC_MODE_POSIX;
-	F2FS_OPTION(sbi).test_dummy_encryption = false;
 #ifdef CONFIG_FS_ENCRYPTION
 	F2FS_OPTION(sbi).inlinecrypt = false;
 #endif
@@ -1919,7 +1913,7 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
 	default_options(sbi);
 
 	/* parse mount options */
-	err = parse_options(sb, data);
+	err = parse_options(sb, data, true);
 	if (err)
 		goto restore_opts;
 	checkpoint_changed =
@@ -2596,9 +2590,10 @@ static int f2fs_set_context(struct inode *inode, const void *ctx, size_t len,
 				ctx, len, fs_data, XATTR_CREATE);
 }
 
-static bool f2fs_dummy_context(struct inode *inode)
+static const union fscrypt_context *
+f2fs_get_dummy_context(struct super_block *sb)
 {
-	return DUMMY_ENCRYPTION_ENABLED(F2FS_I_SB(inode));
+	return F2FS_OPTION(F2FS_SB(sb)).dummy_enc_ctx.ctx;
 }
 
 static bool f2fs_has_stable_inodes(struct super_block *sb)
@@ -2641,7 +2636,7 @@ static const struct fscrypt_operations f2fs_cryptops = {
 	.key_prefix		= "f2fs:",
 	.get_context		= f2fs_get_context,
 	.set_context		= f2fs_set_context,
-	.dummy_context		= f2fs_dummy_context,
+	.get_dummy_context	= f2fs_get_dummy_context,
 	.empty_dir		= f2fs_empty_dir,
 	.max_namelen		= F2FS_NAME_LEN,
 	.has_stable_inodes	= f2fs_has_stable_inodes,
@@ -3593,7 +3588,7 @@ try_onemore:
 		goto free_sb_buf;
 	}
 
-	err = parse_options(sb, options);
+	err = parse_options(sb, options, false);
 	if (err)
 		goto free_options;
 
@@ -3991,6 +3986,7 @@ free_options:
 	for (i = 0; i < MAXQUOTAS; i++)
 		kvfree(F2FS_OPTION(sbi).s_qf_names[i]);
 #endif
+	fscrypt_free_dummy_context(&F2FS_OPTION(sbi).dummy_enc_ctx);
 	kvfree(options);
 free_sb_buf:
 	kvfree(raw_super);
