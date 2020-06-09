@@ -239,11 +239,10 @@ static inline unsigned long __copy_from_user_inatomic_nocache(void *to,
  * Safely read from address @src to the buffer at @dst.  If a kernel fault
  * happens, handle that and return -EFAULT.
  */
-bool probe_kernel_read_allowed(const void *unsafe_src, size_t size,
-		bool strict);
+
+bool probe_kernel_read_allowed(const void *unsafe_src, size_t size);
 
 extern long probe_kernel_read(void *dst, const void *src, size_t size);
-extern long probe_kernel_read_strict(void *dst, const void *src, size_t size);
 extern long probe_user_read(void *dst, const void __user *src, size_t size);
 
 /*
