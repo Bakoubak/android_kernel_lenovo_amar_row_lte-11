@@ -78,7 +78,8 @@
 #include <linux/uaccess.h>
 #include <asm/tlb.h>
 #include <asm/tlbflush.h>
-#include <asm/pgtable.h>
+#include <linux/pgtable.h>
+#include <linux/mm_inline.h>
 
 #include "internal.h"
 
@@ -3241,16 +3242,6 @@ void unmap_mapping_range(struct address_space *mapping,
 EXPORT_SYMBOL(unmap_mapping_range);
 
 #ifdef CONFIG_LRU_GEN
-static void lru_gen_enter_fault(struct vm_area_struct *vma)
-{
-	/* the LRU algorithm doesn't apply to sequential or random reads */
-	current->in_lru_fault = !(vma->vm_flags & (VM_SEQ_READ | VM_RAND_READ));
-}
-
-static void lru_gen_exit_fault(void)
-{
-	current->in_lru_fault = false;
-}
 
 static void lru_gen_swap_refault(struct page *page, swp_entry_t entry)
 {
