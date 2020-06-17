@@ -136,7 +136,7 @@ BPF_CALL_3(bpf_probe_write_user, void *, unsafe_ptr, const void *, src,
 	if (!access_ok(VERIFY_WRITE, unsafe_ptr, size))
 		return -EPERM;
 
-	return probe_kernel_write(unsafe_ptr, src, size);
+	return copy_to_user_nofault(unsafe_ptr, src, size);
 }
 
 static const struct bpf_func_proto bpf_probe_write_user_proto = {
