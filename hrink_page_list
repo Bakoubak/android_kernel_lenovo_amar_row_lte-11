@@ -1,0 +1,875 @@
+[33m0d3a7055389c2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mupstream/4.19.y-cip+perf[m[33m)[m Revert "mm: mglru: initial port"
+[33m1515990e6ea09[m Revert "BACKPORT: mm: introduce include/linux/pgtable.h"
+[33m7b600bcc66bfd[m BACKPORT: mm: introduce include/linux/pgtable.h
+[33m96d867efa352c[m mm: mglru: initial port
+[33m5bab512c1430a[m Merge tag 'v4.19.325-cip136' into upstream/4.19.y-cip
+[33mdc7c03f42213e[m mm, vmscan: prevent infinite loop for costly GFP_NOIO | __GFP_RETRY_MAYFAIL allocations
+[33m584eec87fedbc[m mm/vmscan.c: fix data races using kswapd_classzone_idx
+[33me32a891382874[m mm: memcg: fix memcg reclaim soft lockup
+[33m1e73f56b215c0[m mm: add missing release barrier on PGDAT_RECLAIM_LOCKED unlock
+[33mcd3d7688a6c0f[m[33m ([m[1;31morigin/stock[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mstock[m[33m)[m amar_row_lte: add sources
+[33medaa860bb5d33[m mm: vmscan: account for free pages to prevent infinite Loop in throttle_direct_reclaim()
+[33mc82a659cc8bb7[m mm, vmscan: prevent infinite loop for costly GFP_NOIO | __GFP_RETRY_MAYFAIL allocations
+[33mb73c744019721[m mm/vmscan.c: fix data races using kswapd_classzone_idx
+[33m1aa7a9e5eebc5[m mm: memcg: fix memcg reclaim soft lockup
+[33m837ba4829b9f6[m mm/vmscan.c: don't round up scan size for online memory cgroup
+[33mbeb0cc781b8e0[m mm: vmscan: check if mem cgroup is disabled or not before calling memcg slab shrinker
+[33mc1d98b766ebe9[m mm: vmscan: scan anonymous pages on file refaults
+[33m27ce6c2675f6e[m mm/vmscan.c: prevent useless kswapd loops
+[33m54a20289cbfbf[m mm/vmscan.c: fix trying to reclaim unevictable LRU page
+[33m6536de8232c8b[m mm: fix inactive list balancing between NUMA nodes and cgroups
+[33m657fbf79a8801[m Revert "mm: slowly shrink slabs with a relatively small number of objects"
+[33ma5e8809697136[m mm: don't miss the last page because of round-off error
+[33mb8e57efa2c98c[m mm/vmscan.c: fix int overflow in callers of do_shrink_slab()
+[33m172b06c32b949[m mm: slowly shrink slabs with a relatively small number of objects
+[33m1c4c3b99c03d3[m mm: fix page_freeze_refs and page_unfreeze_refs in comments
+[33m8df4a44cc46bf[m mm: check shrinker is memcg-aware in register_shrinker_prepared()
+[33m7e010df53c801[m mm: use special value SHRINKER_REGISTERING instead of list_empty() check
+[33mac7fb3ad2717c[m mm/vmscan.c: move check for SHRINKER_NUMA_AWARE to do_shrink_slab()
+[33mf90280d6b7963[m mm/vmscan.c: clear shrinker bit if there are no objects related to memcg
+[33m9b996468cfdba[m mm: add SHRINK_EMPTY shrinker methods return value
+[33maeed1d325d429[m mm/vmscan.c: generalize shrink_slab() calls in shrink_node()
+[33mb0dedc49a2daa[m mm/vmscan.c: iterate only over charged shrinkers during memcg shrink_slab()
+[33m0a4465d340282[m mm, memcg: assign memcg-aware shrinkers bitmap to memcg
+[33mb4c2b231c3ba1[m mm: assign id to every memcg-aware shrinker
+[33mbb451fdf3d058[m mm/vmscan.c: condense scan_control
+[33mbf8d5d52ffe89[m memcg: introduce memory.min
+[33m93781325da6e0[m lockdep: fix fs_reclaim annotation
+[33m145e1a71e0905[m mm: fix the NULL mapping case in __isolate_lru_page()
+[33m8e04944f0ea8b[m mm,vmscan: Allow preallocating memory for register_shrinker().
+[33mb93b016313b3b[m page cache: use xa_lock
+[33me27be240df53f[m mm: memcg: make sure memory.events is uptodate when waking pollers
+[33md51d1e64500fc[m mm, vmscan, tracing: use pointer to reclaim_stat struct in trace event
+[33me3c1ac586c992[m mm/vmscan: don't mess with pgdat->flags in memcg reclaim
+[33md108c7721fbd1[m mm/vmscan: don't change pgdat state on base of a single LRU list state
+[33mc4fd4fa58018b[m mm/vmscan: remove redundant current_may_throttle() check
+[33m894befec4d70b[m mm/vmscan: update stale comments
+[33m5ecd9d403ad08[m mm, page_alloc: wakeup kcompactd even if kswapd cannot free more memory
+[33me830c63a621e2[m mm,vmscan: don't pretend forward progress upon shrinker_rwsem contention
+[33me92bb4dd96739[m mm: fix races between address_space dereference and free in page_evicatable
+[33m1c610d5f93c70[m mm/vmscan: wake up flushers for legacy cgroups too
+[33m9c4e6b1a7027f[m mm, mlock, vmscan: no more skipping pagevecs
+[33ma5d09bed7ff7e[m mm: docs: add blank lines to silence sphinx "Unexpected indentation" errors
+[33m69d763fc6d3ae[m mm: pin address_space before dereferencing it while isolating an LRU page
+[33ma4ef87684108e[m mm: remove unused pgdat_reclaimable_pages()
+[33me496612c51305[m mm: do not stall register_shrinker()
+[33m9092c71bb724d[m mm: use sc->priority for slab shrink targets
+[33mbb422a738f656[m mm,vmscan: Make unregister_shrinker() no-op if register_shrinker() failed.
+[33m2d4894b5d2ae0[m mm: remove cold parameter from free_hot_cold_page*
+[33m3a50d14d0df57[m mm: remove unused pgdat->inactive_ratio
+[33me2c5923c349c1[m Merge branch 'for-4.15/block' of git://git.kernel.dk/linux-block
+[33mb24413180f560[m License cleanup: add SPDX GPL-2.0 license identifier to files with no license
+[33m9ba4b2dfafaa7[m fs: kill 'nr_pages' argument from wakeup_flusher_threads()
+[33mfe490cc0fe9e6[m mm, THP, swap: add THP swapping out fallback counting
+[33mbd4c82c22c367[m mm, THP, swap: delay splitting THP after swapped out
+[33mdb73ee0d46379[m mm, vmscan: do not loop on too_many_isolated for ever
+[33md460acb5bdffc[m mm: track actual nr_scanned during shrink_slab()
+[33md92a8cfcb37ec[m locking/lockdep: Rework FS_RECLAIM annotation
+[33mdcda9b04713c3[m mm, tree wide: replace __GFP_REPEAT by __GFP_RETRY_MAYFAIL with more useful semantic
+[33m06226226773d5[m mm, vmscan: avoid thrashing anon lru when free + file is low
+[33m385386cff4c6f[m mm: vmstat: move slab statistics from zone to node counters
+[33m2262185c5b287[m mm: per-cgroup memory reclaim stats
+[33m747552b1e71b4[m mm, THP, swap: enable THP swap optimization only if has compound map
+[33mb8f593cd0896b[m mm, THP, swap: check whether THP can be split firstly
+[33m0f0746589e4be[m mm, THP, swap: move anonymous THP split logic to vmscan
+[33m75f6d6d29a40b[m mm, THP, swap: unify swap slot free functions to put_swap_page
+[33mf2f43e566a02a[m mm/vmscan.c: fix unsequenced modification and access warning
+[33mc6202adf3a096[m mm/vmscan: Adjust system_state checks
+[33m791b48b642324[m mm: vmscan: scan until it finds eligible pages
+[33m499118e966f1d[m mm: introduce memalloc_noreclaim_{save,restore}
+[33mccda7f4360be8[m mm: memcontrol: use node page state naming scheme for memcg
+[33m71cd31135d4cf[m mm: memcontrol: re-use node VM page state enum
+[33m31176c781508e[m mm: memcontrol: clean up memory.events counting function
+[33m2a2e48854d704[m mm: vmscan: fix IO/refault regression in cache workingset transition
+[33m666e5a406c3ed[m mm: make ttu's return boolean
+[33m33fc80e257473[m mm: remove SWAP_AGAIN in ttu
+[33mad6b67041a454[m mm: remove SWAP_MLOCK in ttu
+[33m18863d3a3f593[m mm: remove SWAP_DIRTY in ttu
+[33md6622f6365dbf[m mm/vmscan: more restrictive condition for retry in do_try_to_free_pages
+[33me716f2eb24def[m mm, vmscan: prevent kswapd sleeping prematurely due to mismatched classzone_idx
+[33m631b6e083ec32[m mm, vmscan: only clear pgdat congested/dirty/writeback state when balanced
+[33m333b0a459c0e1[m mm, vmscan: fix zone balance check in prepare_kswapd_sleep
+[33m7dea19f9ee636[m mm: introduce memalloc_nofs_{save,restore} API
+[33m802a3a92ad7ac[m mm: reclaim MADV_FREE pages
+[33ma128ca71fb29e[m mm: delete unnecessary TTU_* flags
+[33m3db65812d6888[m Revert "mm, vmscan: account for skipped pages as a partial scan"
+[33mc822f6223d03c[m mm: delete NR_PAGES_SCANNED and pgdat_reclaimable()
+[33m688035f729dcd[m mm: don't avoid high-priority reclaim on memcg limit reclaim
+[33ma2d7f8e461881[m mm: don't avoid high-priority reclaim on unreclaimable nodes
+[33m047d72c30eedc[m mm: remove seemingly spurious reclaimability check from laptop_mode gating
+[33md450abd81b081[m mm: fix check for reclaimable pages in PF_MEMALLOC reclaim throttling
+[33mc73322d098e4b[m mm: fix 100% CPU kswapd busyloop on unreclaimable nodes
+[33m5b3cc15aff243[m sched/headers: Prepare to move the memalloc_noio_*() APIs to <linux/sched/mm.h>
+[33mc2f83143f1c67[m mm, vmscan: clear PGDAT_WRITEBACK when zone is balanced
+[33mc55e8d035b28b[m mm: vmscan: move dirty pages out of the way until they're flushed
+[33m4eda48235011d[m mm: vmscan: only write dirty pages that the scanner has seen twice
+[33mbbef938429f5b[m mm: vmscan: remove old flusher wakeup from direct reclaim path
+[33m726d061fbd365[m mm: vmscan: kick flushers when we encounter dirty pages on the LRU
+[33m1276ad68e2491[m mm: vmscan: scan dirty pages even in laptop mode
+[33mabd6e8a7ac498[m Revert "mm: bail out in shrink_inactive_list()"
+[33m71ab6cfe88dcf[m mm, vmscan: consider eligible zones in get_scan_count
+[33mfd538803731e5[m mm, vmscan: cleanup lru size claculations
+[33mf0958906cd2bf[m mm, vmscan: do not count freed pages as PGDEACTIVATE
+[33mdcec0b60a8213[m mm, vmscan: add mm_vmscan_inactive_list_is_low tracepoint
+[33m5bccd16657e89[m mm, vmscan: enhance mm_vmscan_lru_shrink_inactive tracepoint
+[33m3c710c1ad11b4[m mm, vmscan: extract shrink_page_list reclaim counters into a struct
+[33m32b3f2974adca[m mm, vmscan: show LRU name in mm_vmscan_lru_isolate tracepoint
+[33m1265e3a69f1ea[m mm, vmscan: show the number of skipped pages in mm_vmscan_lru_isolate
+[33m9d998b4f1e39a[m mm, vmscan: add active list aging tracepoint
+[33mb4536f0c829c8[m mm, memcg: fix the active list aging for lowmem requests when memcg is enabled
+[33me34bac726d270[m Merge branch 'akpm' (patches from Andrew)
+[33me71c3978d6f97[m Merge branch 'smp-hotplug-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip
+[33m5f33a0803bbd7[m mm/vmscan.c: set correct defer count for shrinker
+[33mbd041733c9f61[m mm, vmscan: add cond_resched() into shrink_node_memcg()
+[33m517bbed90635a[m mm/vmscan: Convert to hotplug state machine
+[33m89a2848381b5f[m mm: memcontrol: do not recurse in direct reclaim
+[33mc9634cf012321[m mm: use zonelist name instead of using hardcoded index
+[33mbf48438354a79[m mm, vmscan: get rid of throttle_vm_writeout
+[33mfdd4c6149a71f[m mm, vmscan: make compaction_ready() more accurate and readable
+[33m9861a62c335cd[m mm, compaction: create compact_gap wrapper
+[33mcf378319d3356[m mm, compaction: rename COMPACT_PARTIAL to COMPACT_SUCCESS
+[33mb385d21f27d86[m mm: delete unnecessary and unsafe init_tlb_ubc()
+[33m6aa303defb745[m mm, vmscan: only allocate and reclaim from zones with pages managed by the buddy allocator
+[33mb5afba2974f9e[m mm: vmscan: fix memcg-aware shrinkers not called on global reclaim
+[33m91dcade47a3d0[m mm: bail out in shrink_inactive_list()
+[33md7f05528eedb0[m mm, vmscan: account for skipped pages as a partial scan
+[33mf8d1a31163fcb[m mm: consider whether to decivate based on eligible zones inactive ratio
+[33m5a1c84b404a71[m mm: remove reclaim and compaction retry approximations
+[33m71c799f4982d3[m mm: add per-zone lru list stat
+[33m785b99febb33d[m mm, vmscan: release/reacquire lru_lock on pgdat change
+[33m22fecdf5e1702[m mm, vmscan: remove redundant check in shrink_zones()
+[33m7ee36a14f06cc[m mm, vmscan: Update all zone LRU sizes before updating memcg
+[33mbca6759258dbe[m mm, vmstat: remove zone and node double accounting by approximating retries
+[33m7cc30fcfd2a89[m mm: vmstat: account per-zone stalls and pages skipped during reclaim
+[33me5146b12e2d02[m mm, vmscan: add classzone information to tracepoints
+[33m84c7a7771fc84[m mm, vmscan: Have kswapd reclaim from all zones if reclaiming and buffer_heads_over_limit
+[33md9f21d426dc60[m mm, vmscan: avoid passing in `remaining' unnecessarily to prepare_kswapd_sleep()
+[33m4f588331bdb92[m mm, vmscan: avoid passing in classzone_idx unnecessarily to compaction_ready
+[33m970a39a363932[m mm, vmscan: avoid passing in classzone_idx unnecessarily to shrink_node
+[33ma5f5f91da6ad6[m mm: convert zone_reclaim to node_reclaim
+[33me1a556374abc0[m mm, vmscan: only wakeup kswapd once per node for the requested classzone
+[33mc4a25635b60d0[m mm: move vmscan writes and file write accounting to the node
+[33m11fb998986a72[m mm: move most file-based accounting to the node
+[33m50658e2e04c12[m mm: move page mapped accounting to the node
+[33mef8f2327996b5[m mm, memcg: move memcg limit enforcement from zones to nodes
+[33ma9dd0a83104c0[m mm, vmscan: make shrink_node decisions more node-centric
+[33m86c79f6b5426c[m mm: vmscan: do not reclaim from kswapd if there is any eligible zone
+[33m6256c6b499a16[m mm, vmscan: remove duplicate logic clearing node congestion and dirty state
+[33m79dafcdca3138[m mm, vmscan: by default have direct reclaim only shrink once per node
+[33m38087d9b03609[m mm, vmscan: simplify the logic deciding whether kswapd sleeps
+[33m31483b6ad2057[m mm, vmscan: remove balance gap
+[33m1d82de618ddde[m mm, vmscan: make kswapd reclaim in terms of nodes
+[33mf7b60926ebc05[m mm, vmscan: have kswapd only scan based on the highest requested zone
+[33mb2e18757f2c9d[m mm, vmscan: begin reclaiming pages on a per-node basis
+[33m599d0c954f91d[m mm, vmscan: move LRU lists to node
+[33ma52633d8e9c35[m mm, vmscan: move lru_lock to the node
+[33m7751b2da6be0b[m vmscan: split file huge pages before paging them out
+[33mb1123ea6d3b3d[m mm: balloon: use general non-lru movable page feature
+[33m0a0337e0d1d13[m mm, oom: rework oom detection
+[33mb6459cc154e80[m vmscan: consider classzone_idx in compaction_ready
+[33m59dc76b0d4dfd[m mm: vmscan: reduce size of inactive file list
+[33m9d5e6a9f22311[m mm: update_lru_size do the __mod_zone_page_state
+[33m0139aa7b7fa12[m mm: rename _count, field of the struct page, to _refcount
+[33mfd901c95388b3[m mm: wake kcompactd before kswapd's short sleep
+[33m7bf52fb891b64[m mm: vmscan: reclaim highmem zone if buffer_heads is over limit
+[33mfe896d1878949[m mm: introduce page reference manipulation functions
+[33m0fc9f58a90a50[m mm: vmscan: pass root_mem_cgroup instead of NULL to memcg aware shrinker
+[33maccf62422b3a6[m mm, kswapd: replace kswapd compaction with waking up kcompactd
+[33m81c5857b279e6[m mm, kswapd: remove bogus check of balance_classzone_idx
+[33mfdf1cdb91b6ab[m mm: remove unnecessary uses of lock_page_memcg()
+[33m62cccb8c8e7a3[m mm: simplify lock_page_memcg()
+[33m23047a96d7cfc[m mm: workingset: per-cgroup cache thrash detection
+[33m81f8c3a461d16[m mm: memcontrol: generalize locking for the page->mem_cgroup binding
+[33m0db2cb8da89d9[m mm, vmscan: make zone_reclaimable_pages more precise
+[33mcecf257b62e39[m mm: vmscan: do not clear SHRINKER_NUMA_AWARE if nr_node_ids == 1
+[33mcf2a82ee43273[m mm: downgrade VM_BUG in isolate_lru_page() to warning
+[33mf9fe48bece3af[m dax: support dirty DAX entries in radix tree
+[33m5ccc5abaaf6f9[m mm: free swap cache aggressively if memcg swap is full
+[33md8b38438a0bcb[m mm: vmscan: do not scan anon pages if memcg swap limit is hit
+[33meb01aaab43084[m mm: memcontrol: replace mem_cgroup_lruvec_online with mem_cgroup_online
+[33m3337767850b49[m mm: vmscan: pass memcg to get_scan_count()
+[33m567e9ab2e614e[m mm: memcontrol: give the kmem states more descriptive names
+[33m854e9ed09dedf[m mm: support madvise(MADV_FREE)
+[33m48c935ad88f5b[m page-flags: define PG_locked behavior on compound pages
+[33mbb5b8589767a3[m mm: make sure isolate_lru_page() is never called for tail page
+[33m8e8ae645249b8[m mm: memcontrol: hook up vmpressure to socket pressure
+[33mc8ad6302c2b66[m mm/readahead.c, mm/vmscan.c: use lru_to_page instead of list_to_page
+[33m9f6c399ddc369[m mm, vmscan: consider isolated pages in zone_reclaimable_pages
+[33m316bda0e6cc5f[m vmscan: do not force-scan file lru if its absolute size is small
+[33mba5e9579433ae[m mm: change mm_vmscan_lru_shrink_inactive() proto types
+[33m3aa2385111168[m mm/vmscan.c: change trace_mm_vmscan_writepage() proto type
+[33md0164adc89f6b[m mm, page_alloc: distinguish between being unable to sleep, unwilling to sleep and avoiding waking kswapd
+[33me2b19197ff9dc[m mm, page_alloc: remove unnecessary parameter from zone_watermark_ok_safe
+[33m2e3078af2c677[m Merge branch 'akpm' (patches from Andrew)
+[33md031a157915e0[m mm/vmscan.c: fix types of some locals
+[33m42e2e45777a8c[m mm/vmscan: make inactive_anon/file_is_low return bool
+[33m29d06bbb41595[m mm/vmscan: make inactive_anon_is_low_global return directly
+[33m69234acee5440[m Merge branch 'for-4.4' of git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup
+[33md5028f9f7d8de[m vmscan: fix sane_reclaim helper for legacy memcg
+[33m7fadc82022249[m mm, vmscan: unlock page while waiting on writeback
+[33mc54839a722a02[m vmscan: fix increasing nr_isolated incurred by putback unevictable pages
+[33m0b802f101d0c6[m mm: vmscan: never isolate more pages than necessary
+[33m33398cf2f360c[m memcg: export struct mem_cgroup
+[33md950c9477d51f[m mm: defer flush of writable TLB entries
+[33m72b252aed506b[m mm: send one IPI per CPU to TLB flush all entries after unmapping pages
+[33mecf5fc6e9654c[m mm, vmscan: Do not wait for page writeback for GFP_NOFS allocations
+[33me4bc13adfd016[m Merge branch 'for-4.2/writeback' of git://git.kernel.dk/linux-block
+[33m95bbc0c7210a7[m mm: rename RECLAIM_SWAP to RECLAIM_UNMAP
+[33mf012a84aff7a7[m mm: vmscan: do not throttle based on pfmemalloc reserves if node has no reclaimable pages
+[33m97c9341f72710[m mm: vmscan: disable memcg direct reclaim stalling if cgroup writeback support is in use
+[33m703c270887bb5[m writeback: implement and use inode_congested()
+[33mc4843a7593a9d[m memcg: add per cgroup dirty page accounting
+[33m818099574b04c[m Merge branch 'akpm' (patches from Andrew)
+[33mcb731d6c62bbc[m vmscan: per memory cgroup slab shrinkers
+[33m6bec003528611[m Merge branch 'for-3.20/bdi' of git://git.kernel.dk/linux-block
+[33m241994ed8649f[m mm: memcontrol: default hierarchy interface for memory
+[33m90cbc2508827e[m vmscan: force scan offline memory cgroups
+[33mcfc5115579458[m mm, vmscan: wake up all pfmemalloc-throttled processes at once
+[33m17636faada9c2[m mm/vmscan: fix highidx argument type
+[33mde1414a654e66[m fs: export inode_to_bdi and use it in favor of mapping->backing_dev_info
+[33m9e5e3661727ea[m mm, vmscan: prevent kswapd livelock due to pfmemalloc-throttled process being killed
+[33m6b4f7799c6a57[m mm: vmscan: invoke slab shrinkers from shrink_zone()
+[33m2756d373a3f45[m Merge branch 'for-3.19' of git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup
+[33mebff398017c69[m mm, compaction: pass classzone_idx and alloc_flags to watermark checking
+[33m1da58ee2a0279[m mm: vmscan: count only dirty pages as congested
+[33m8612c6639b70c[m mm/vmscan.c: replace printk with pr_err
+[33m344736f29b359[m cpuset: simplify cpuset_node_allowed API
+[33mb70a2a21dc9d4[m mm: memcontrol: fix transparent huge page allocations under pressure
+[33m5705465174686[m mm: clean up zone flags
+[33m1f13ae399c58a[m mm: remove noisy remainder of the scan_unevictable interface
+[33m53853e2d2bfb7[m mm, compaction: defer each zone individually instead of preferred zone
+[33m747db954cab64[m mm: memcontrol: use page lists for uncharge batching
+[33m0a31bc97c80c3[m mm: memcontrol: rewrite uncharge API
+[33m2ab051e11bfa3[m memcg, vmscan: Fix forced scan of anonymous pages
+[33m7c0db9e917f77[m mm, vmscan: fix an outdated comment still mentioning get_scan_ratio
+[33m0d5d823ab4e60[m mm: move zone->pages_scanned into a vmstat counter
+[33md0480be44a90a[m mm: update the description for vm_total_pages
+[33mee814fe23daf0[m mm: vmscan: clean up struct scan_control
+[33m02695175c79b9[m mm: vmscan: move swappiness out of scan_control
+[33m2344d7e44b870[m mm: vmscan: remove all_unreclaimable()
+[33m0b06496a338e8[m mm: vmscan: rework compaction-ready signaling in direct reclaim
+[33m8d07429319b28[m mm: vmscan: remove remains of kswapd-managed zone->all_unreclaimable
+[33m16b9057804c02[m Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs
+[33mb738d764652dc[m Don't trigger congestion wait on dirty-but-not-writeout pages
+[33mb1de0d139c97a[m mm: convert some level-less printks to pr_*
+[33m688eb988d15af[m vmscan: memcg: always use swappiness of the reclaimed memcg
+[33m71abdc15adf8c[m mm: vmscan: clear kswapd's special reclaim powers before exiting
+[33m1a501907bbea8[m mm: vmscan: use proportional scanning during direct reclaim and full scan at DEF_PRIORITY
+[33m4be89a3460965[m mm/vmscan.c: use DIV_ROUND_UP for calculation of zone's balance_gap and correct comments.
+[33mb745bc85f21ea[m mm: page_alloc: convert hot/cold parameter and immediate callers to bool
+[33mdf9024a8c5a3e[m mm: shrinker: add nid to tracepoint output
+[33m7fe7047597cf5[m mm: shrinker trace points: fix negatives
+[33m399ba0b95670c[m mm/vmscan.c: avoid throttling reclaim for loop-back nfsd threads
+[33m675becce15f32[m mm: vmscan: do not throttle based on pfmemalloc reserves if node has no ZONE_NORMAL
+[33mbfc8c90139ebd[m mem-hotplug: implement get/put_online_mems
+[33m6f04f48dc9c04[m mm: only force scan in reclaim when none of the LRUs are big enough.
+[33m8174202b34c30[m write_iter variants of {__,}generic_file_aio_write()
+[33m623762517e237[m revert "mm: vmscan: do not swap anon pages just because free+file is low"
+[33m83da751005873[m vmscan: reclaim_clean_pages_from_list() must use mod_zone_page_state()
+[33m0bf1457f0cfca[m mm: vmscan: do not swap anon pages just because free+file is low
+[33m9bbc04eeb01fc[m mm/vmscan: do not check compaction_ready on promoted zones
+[33m619d0d76c1ee9[m mm/vmscan: restore sc->gfp_mask after promoting it to __GFP_HIGHMEM
+[33ma528910e12ec7[m mm: thrash detection-based file cache sizing
+[33m91b0abe36a7b2[m mm + fs: store shadow entries in page cache
+[33md5bc5fd3fcb7b[m mm: vmscan: shrink_slab: rename max_pass -> freeable
+[33m3115cd9145511[m mm: vmscan: remove shrink_control arg from do_try_to_free_pages()
+[33m65ec02cb9ad44[m mm: vmscan: move call to shrink_slab() to shrink_zones()
+[33m99120b772b528[m mm: vmscan: respect NUMA policy mask when shrinking slab on direct reclaim
+[33ma1c3bfb2f67ef[m mm/page-writeback.c: do not count anon pages as dirtyable memory
+[33mec97097bca147[m mm: vmscan: call NUMA-unaware shrinkers irrespective of nodemask
+[33m0b1fb40a3b129[m mm: vmscan: shrink all slab objects if tight on memory
+[33m309381feaee56[m mm: dump page when hitting a VM_BUG_ON using VM_BUG_ON_PAGE
+[33mae39332162a83[m mm/vmscan.c: don't forget to free shrinker->nr_deferred
+[33m117aad1e9e4d9[m mm: avoid reinserting isolated balloon pages into LRU lists
+[33m0608f43da64a1[m revert "memcg, vmscan: integrate soft reclaim tighter with zone shrinking code"
+[33mb1aff7fcf86c8[m revert "vmscan, memcg: do softlimit reclaim also for targeted reclaim"
+[33m694fbc0fe7851[m revert "memcg: enhance memcg iterator to support predicates"
+[33m3120055e869f2[m revert "memcg, vmscan: do not attempt soft limit reclaim if it would not scan anything"
+[33m20ba27f52eded[m revert "memcg, vmscan: do not fall into reclaim-all pass too quickly"
+[33mac4de9543aca5[m Merge branch 'akpm' (patches from Andrew Morton)
+[33mf894ffa865301[m memcg: trivial cleanups
+[33me975de998b961[m memcg, vmscan: do not fall into reclaim-all pass too quickly
+[33me839b6a1c8d08[m memcg, vmscan: do not attempt soft limit reclaim if it would not scan anything
+[33mde57780dc659f[m memcg: enhance memcg iterator to support predicates
+[33ma5b7c87f92076[m vmscan, memcg: do softlimit reclaim also for targeted reclaim
+[33m3b38722efd9f6[m memcg, vmscan: integrate soft reclaim tighter with zone shrinking code
+[33m26935fb06ee88[m Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs
+[33m6e543d5780e36[m mm: vmscan: fix do_try_to_free_pages() livelock
+[33m0ec3b74c7f559[m mm: putback_lru_page: remove unnecessary call to page_lru_base_type()
+[33m892f795df1eb1[m mm: vmscan: fix numa reclaim balance problem in kswapd
+[33ma0b02131c5fcd[m shrinker: Kill old ->shrink API.
+[33m1d3d4437eae1b[m vmscan: per-node deferred work
+[33m0ce3d74450815[m shrinker: add node awareness
+[33m24f7c6b981fb7[m mm: new shrinker API
+[33m918fc718c5922[m mm: vmscan: do not scale writeback pages when deciding whether to set ZONE_WRITEBACK
+[33m5a1c9cbc1550f[m mm: vmscan: do not continue scanning if reclaim was aborted for compaction
+[33mc53954a092d07[m mm: remove lru parameter from __lru_cache_add and lru_cache_add_lru
+[33mb45972265f823[m mm: vmscan: take page buffers dirty and locked state into account
+[33md04e8acd03e5c[m mm: vmscan: treat pages marked for immediate reclaim as zone congestion
+[33m8e95028280455[m mm: vmscan: move direct reclaim wait_iff_congested into shrink_list
+[33mf7ab8db791a86[m mm: vmscan: set zone flags before blocking
+[33mb1a6f21e3b231[m mm: vmscan: stall page reclaim after a list of pages have been processed
+[33me2be15f6c3eec[m mm: vmscan: stall page reclaim and writeback pages based on dirty/writepage pages encountered
+[33m7c954f6de6b63[m mm: vmscan: move logic from balance_pgdat() to kswapd_shrink_zone()
+[33mb7ea3c417b6c2[m mm: vmscan: check if kswapd should writepage once per pgdat scan
+[33m283aba9f9e0e4[m mm: vmscan: block kswapd if it is encountering pages under writeback
+[33md43006d503ac9[m mm: vmscan: have kswapd writeback pages based on dirty pages encountered, not priority
+[33m9aa41348a8d11[m mm: vmscan: do not allow kswapd to scan at maximum priority
+[33m2ab44f434586b[m mm: vmscan: decide whether to compact the pgdat based on reclaim progress
+[33mb8e83b942a16e[m mm: vmscan: flatten kswapd priority loop
+[33me82e0561dae9f[m mm: vmscan: obey proportional scanning requirements for kswapd
+[33m75485363ce855[m mm: vmscan: limit the number of pages kswapd reclaims at each priority
+[33m5bc7b8aca942d[m mm: thp: add split tail pages to shrink page list in page reclaim
+[33m70ddf637eebe4[m memcg: add memory.pressure_level events
+[33m2d42a40d592fa[m mm/vmscan.c: minor cleanup for kswapd
+[33md72515b85a658[m mm/vmscan: fix error return in kswapd_run()
+[33mb21e0b90ccb99[m vmscan: change type of vm_total_pages to unsigned long
+[33m0e50ce3b50fb4[m mm: use up free swap space before reaching OOM kill
+[33me3790144c9091[m mm: refactor inactive_file_is_low() to use get_lru_size()
+[33mec8acf20afb85[m swap: add per-partition lock for swapfile
+[33m21caf2fc1931b[m mm: teach mm by current context info to not do I/O during memory allocation
+[33m258401a60c4df[m mm: don't wait on congested zones in balance_pgdat()
+[33mb40da04946aa7[m mm: use zone->present_pages instead of zone->managed_pages where appropriate
+[33mdafcb73e385e3[m mm: avoid calling pgdat_balanced() needlessly
+[33ma394cb8ee632e[m memcg,vmscan: do not break out targeted reclaim without reclaimed pages
+[33m62b726c1b3cde[m mm/vmscan.c:__zone_reclaim(): replace max_t() with max()
+[33m9b4f98cdac968[m mm: vmscan: compaction works against zones, not lruvecs
+[33m9a2651140ef74[m mm: vmscan: clean up get_scan_count()
+[33m11d16c25bbf7a[m mm: vmscan: improve comment on low-page cache handling
+[33m10316b313cbde[m mm: vmscan: clarify how swappiness, highest priority, memcg interact
+[33md778df51c0926[m mm: vmscan: save work scanning (almost) empty LRU lists
+[33m7c5bd705d8f98[m mm: memcg: only evict file pages when we have plenty
+[33mfcb35a9bac671[m MM: vmscan: remove __devinit attribute.
+[33mecccd1248d6e6[m mm: fix null pointer dereference in wait_iff_congested()
+[33m4ae0a48b5efc4[m mm: modify pgdat_balanced() so that it also handles order-0
+[33mcda73a10eb3f4[m mm: do not sleep in balance_pgdat if there's no i/o congestion
+[33m3cf23841b4b76[m mm/vmscan.c: avoid possible deadlock caused by too_many_isolated()
+[33md37dd5dcb955d[m vmscan: comment too_many_isolated()
+[33m48fb2e240c427[m vmscan: use N_MEMORY instead N_HIGH_MEMORY
+[33m6f6313d4870f9[m mm/vmscan.c: try_to_freeze() returns boolean
+[33me9868505987a0[m mm,vmscan: only evict file pages when we have plenty
+[33md84da3f9e4f18[m mm: use IS_ENABLED(CONFIG_COMPACTION) instead of COMPACTION_BUILD
+[33med23ec4f0a510[m mm: vmscan: fix inappropriate zone congestion clearing
+[33mc702418f8a2fa[m mm: vmscan: do not keep kswapd looping forever due to individual uncompactable zones
+[33m60cefed485a02[m mm: vmscan: fix endless loop in kswapd balancing
+[33m50694c28f1e1d[m mm: vmscan: check for fatal signals iff the process was throttled
+[33m96710098ee124[m mm: revert "mm: vmscan: scale number of pages reclaimed by reclaim/compaction based on failures"
+[33mb0a8cc58e6b9a[m mm: bugfix: set current->reclaim_state to NULL while returning from kswapd()
+[33me46a28790e594[m CMA: migrate mlocked pages
+[33m39b5f29ac1f98[m mm: remove vma arg from page_evictable
+[33m62997027ca5b3[m mm: compaction: clear PG_migrate_skip based on compaction and reclaim activity
+[33m02c6de8d757cb[m mm: cma: discard clean pages during contiguous allocation instead of migration
+[33md5dc0ad928fb9[m mm/vmscan: fix error number for failed kthread
+[33m83fde0f22872a[m mm: vmscan: scale number of pages reclaimed by reclaim/compaction based on failures
+[33m18b48d5873a6f[m memory hotplug: reset pgdat->kswapd to NULL if creating kernel thread fails
+[33m69980e31754ef[m memcg: gix memory accounting scalability in shrink_page_list
+[33mc3b94f44fcb07[m memcg: further prevent OOM with too many dirty pages
+[33me62e384e9da8d[m memcg: prevent OOM with too many dirty pages
+[33m68243e76ee343[m mm: account for the number of times direct reclaimers get throttled
+[33m5515061d22f0f[m mm: throttle direct reclaimers if PF_MEMALLOC reserves are low and swap is backed by network storage
+[33mc255a458055e4[m memcg: rename config variables
+[33md14b7a419a664[m Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/jikos/trivial
+[33m1c7e7f6c0703d[m mm: fix lost kswapd wakeup in kswapd_stop()
+[33md8adde17e5f85[m memory hotplug: fix invalid memory access caused by stale kswapd pointer
+[33m59f91e5dd0504[m Merge branch 'master' into for-next
+[33mab8704b8c6ec6[m mm/vmscan: cleanup comment error in balance_pgdat
+[33mbe7bd59db71df[m mm: fix page reclaim comment error
+[33mfa9add641b1b1[m mm/memcg: apply add/del_page to lruvec
+[33m75b00af77ed5b[m mm: trivial cleanups in vmscan.c
+[33m4d7dcca213921[m mm/memcg: get_lru_size not get_lruvec_size
+[33mf9be23d6da035[m mm/vmscan: kill struct mem_cgroup_zone
+[33m90bdcfafdc660[m mm/vmscan: push lruvec pointer into should_continue_reclaim()
+[33m90126375d89ab[m mm/vmscan: push lruvec pointer into get_scan_count()
+[33m1a93be0e7a6fc[m mm/vmscan: push lruvec pointer into shrink_list()
+[33mc56d5c7dfeb5c[m mm/vmscan: push lruvec pointer into inactive_list_is_low()
+[33m074291fea8bce[m mm/vmscan: replace zone_nr_lru_pages() with get_lruvec_size()
+[33m27ac81d85e5cf[m mm/vmscan: push lruvec pointer into putback_inactive_pages()
+[33m95d918fc00907[m mm/vmscan: remove update_isolated_counts()
+[33m6a18adb35c278[m mm/vmscan: push zone pointer into shrink_page_list()
+[33m5dc35979e444b[m mm/vmscan: push lruvec pointer into isolate_lru_pages()
+[33m9e3b2f8cd340e[m mm/vmscan: store "priority" in struct scan_control
+[33m3d58ab5c97fa2[m mm/memcg: use vm_swappiness from target memory cgroup
+[33m89abfab133ef1[m mm/memcg: move reclaim_stat into lruvec
+[33mc3c787e8c3855[m mm/memcg: scanning_global_lru means mem_cgroup_disabled
+[33mbbf808ed7de68[m mm/memcg: kill mem_cgroup_lru_del()
+[33mf3fd4a61928a5[m mm: remove lru type checks from __isolate_lru_page()
+[33m3cb9945179bd0[m mm: push lru index into shrink_[in]active_list()
+[33mfe35004fbf9ea[m mm: avoid swapping out with swappiness==0
+[33me48982734ea05[m mm: consider all swapped back pages in used-once logic
+[33m096a7cf44712a[m mm: rename is_mlocked_vma() to mlocked_vma_newpage()
+[33mc3ac9a8ade65c[m mm: memcg: count pte references from every member of the reclaimed hierarchy
+[33m23b9da55c5b0f[m mm: vmscan: remove reclaim_mode_t
+[33m41ac1999c3e35[m mm: vmscan: do not stall on writeback during memory compaction
+[33mc53919adc045b[m mm: vmscan: remove lumpy reclaim
+[33me709ffd6169cc[m mm: remove swap token code
+[33m904249aa68010[m mm: fix up the vmscan stat in vmstat
+[33m41c93088127df[m Revert "mm: vmscan: fix misused nr_reclaimed in shrink_mem_cgroup_zone()"
+[33m496b919b3bdd9[m Fix potential endless loop in kswapd when compaction is not enabled
+[33m643ac9fc5429e[m mm: fix testorder interaction between two kswapd patches
+[33m1480de0340a8d[m mm: forbid lumpy-reclaim in shrink_active_list()
+[33mcc9a6c8776615[m cpuset: mm: reduce large amounts of memory barrier related damage v3
+[33mc7cfa37b7324a[m mm/vmscan.c: fix spelling error
+[33md563c0501bf87[m vmscan: handle isolated pages with lru lock released
+[33mcc715d99e529d[m mm: vmscan: forcibly scan highmem if there are too many buffer_heads pinning highmem
+[33maff622495c9a0[m vmscan: only defer compaction for failed order and higher
+[33m7be62de99adca[m vmscan: kswapd carefully call compaction
+[33mfe2c2a1066631[m vmscan: reclaim at order 0 when compaction is enabled
+[33mc38446cc65e1f[m mm: vmscan: fix misused nr_reclaimed in shrink_mem_cgroup_zone()
+[33m6131728914810[m mm/vmscan.c: cleanup with s/reclaim_mode/isolate_mode/
+[33m245132643e1cf[m SHM_UNLOCK: fix Unevictable pages stranded after swap
+[33m85046579bde15[m SHM_UNLOCK: fix long unpreemptible section
+[33m3f79768f23974[m mm: rearrange putback_inactive_pages
+[33mf626012db08b9[m mm: remove isolate_pages()
+[33m4111304dab198[m mm: enum lru_list lru
+[33m2bcf887963812[m mm: take pagevecs off reclaim stack
+[33m0cee34fd72c58[m mm: vmscan: check if reclaim should really abort even if compaction_ready() is true for one zone
+[33mfe4b1b244bdb9[m mm: vmscan: when reclaiming for compaction, ensure there are sufficient free pages available
+[33mc82449352854f[m mm: compaction: make isolate_lru_page() filter-aware again
+[33m7335084d446b8[m mm: vmscan: do not OOM if aborting reclaim to start compaction
+[33m5013473152d1a[m mm: vmscan: check if we isolated a compound page during lumpy scan
+[33mea4d349ffa802[m vmscan/trace: Add 'file' info to trace_mm_vmscan_lru_isolate()
+[33m72835c86ca15d[m mm: unify remaining mem_cont, mem, etc. variable names to memcg
+[33m925b7673cce39[m mm: make per-memcg LRU lists exclusive
+[33m6290df5458149[m mm: collect LRU list heads into struct lruvec
+[33mb95a2f2d486d0[m mm: vmscan: convert global reclaim to per-memcg LRU lists
+[33m5660048ccac87[m mm: move memcg hierarchy reclaim to generic reclaim code
+[33mf16015fbf2f6a[m mm: vmscan: distinguish between memcg triggering reclaim and memcg being scanned
+[33m89b5fae5368f6[m mm: vmscan: distinguish global reclaim from global LRU scanning
+[33m3770490ec82ca[m mm: vmscan: fix typo in isolating lru pages
+[33m043bcbe5ec51e[m mm: test PageSwapBacked in lumpy reclaim
+[33m86cfd3a45042a[m mm/vmscan.c: consider swap space when deciding whether to continue reclaim
+[33m25bd91bd27820[m vmscan: add task name to warn_scan_unevictable() messages
+[33mcc59850ef940e[m mm: add free_hot_cold_page_list() helper
+[33mc909e99364c8b[m vmscan: activate executable pages after first usage
+[33m34dbc67a644f1[m vmscan: promote shared file mapped pages
+[33mff4b8a57f0aaa[m Merge branch 'driver-core-next' into Linux 3.2
+[33m10fbcf4c6cb12[m convert 'memory' sysdev_class to a regular subsystem
+[33m83aeeada7c69f[m vmscan: use atomic-long for shrinker batching
+[33m635697c663f38[m vmscan: fix initial shrinker size handling
+[33m208bca0860406[m Merge branch 'writeback-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/wfg/linux
+[33m9b272977e3b99[m memcg: skip scanning active lists based on individual size
+[33me0c23279c9f80[m vmscan: abort reclaim/compaction if compaction can proceed
+[33me0887c19b2daa[m vmscan: limit direct reclaim for higher order allocations
+[33m21ee9f398be20[m vmscan: add barrier to prevent evictable page in unevictable list
+[33m264e56d8247ef[m mm: disable user interface to manually rescue unevictable pages
+[33m3f380998aeb51[m vmscan.c: fix invalid strict_strtoul() check in write_scan_unevictable_node()
+[33mf0dfcde099453[m kswapd: assign new_order and new_classzone_idx after wakeup in sleeping
+[33md2ebd0f6b8956[m kswapd: avoid unnecessary rebalance after an unsuccessful balancing
+[33m16fb951237c2b[m vmscan: count pages into balanced for zone with good watermark
+[33m49ea7eb65e7c5[m mm: vmscan: immediately reclaim end-of-LRU dirty pages when writeback completes
+[33m92df3a723f84c[m mm: vmscan: throttle reclaim if encountering too many dirty pages under writeback
+[33mf84f6e2b0868f[m mm: vmscan: do not writeback filesystem pages in kswapd except in high priority
+[33ma18bba061c789[m mm: vmscan: remove dead code related to lumpy reclaim waiting on pages under writeback
+[33mee72886d8ed5d[m mm: vmscan: do not writeback filesystem pages in direct reclaim
+[33mf11c0ca501af8[m mm: vmscan: drop nr_force_scan[] from get_scan_count
+[33m3da367c3e5fca[m vmscan: add block plug for page reclaim
+[33mf80c0673610e3[m mm: zone_reclaim: make isolate_lru_page() filter-aware
+[33m39deaf8585152[m mm: compaction: make isolate_lru_page() filter-aware
+[33m4356f21d09283[m mm: change isolate mode from #define to bitwise type
+[33m0e175a1835ffc[m writeback: Add a 'reason' to wb_writeback_work
+[33me060c38434b2c[m Merge branch 'master' into for-next
+[33m185efc0f9a1f2[m memcg: Revert "memcg: add memory.vmscan_stat"
+[33ma4d3e9e763370[m mm: vmscan: fix force-scanning small targets without swap
+[33m439423f6894aa[m vmscan: clear ZONE_CONGESTED for zone with good watermark
+[33mf51bdd2e97098[m mm: fix a vmscan warning
+[33m81d66c70b546e[m mm/vmscan.c: fix a typo in a comment "relaimed" to "reclaimed"
+[33m82f9d486e59f5[m memcg: add memory.vmscan_stat
+[33m4508378b9523e[m memcg: fix vmscan count in small memcgs
+[33mbb2a0de92c891[m memcg: consolidate memory cgroup lru stat functions
+[33m1f4c025b5a552[m memcg: export memory cgroup's swappiness with mem_cgroup_swappiness()
+[33me9299f5058595[m vmscan: add customisable shrinker batch size
+[33m3567b59aa80ac[m vmscan: reduce wind up shrinker->nr when shrinker can't do work
+[33macf92b485cccf[m vmscan: shrinker->nr updates race and go wrong
+[33m095760730c104[m vmscan: add shrink_slab tracepoints
+[33m4746efded84d7[m vmscan: fix a livelock in kswapd
+[33m215ddd6664ced[m mm: vmscan: only read new_classzone_idx from pgdat when reclaiming successfully
+[33mda175d06b4370[m mm: vmscan: evaluate the watermarks against the correct classzone
+[33md7868dae893c8[m mm: vmscan: do not apply pressure to slab if we are not applying pressure to zone
+[33m08951e545918c[m mm: vmscan: correct check for kswapd sleeping in sleeping_prematurely
+[33mac34a1a3c39da[m memcg: fix direct softlimit reclaim to be called in limit path
+[33md179e84ba5da1[m mm: vmscan: do not use page_count without a page pin
+[33ma433658c30974[m vmscan,memcg: memcg aware swap token
+[33m1bac180bd29e0[m memcg: rename mem_cgroup_zone_nr_pages() to mem_cgroup_zone_nr_lru_pages()
+[33m246e87a939344[m memcg: fix get_scan_count() for small targets
+[33m889976dbcb121[m memcg: reclaim memory from nodes in round-robin order
+[33md149e3b25d7c5[m memcg: add the soft_limit reclaim in global direct reclaim.
+[33m0ae5e89c60c9e[m memcg: count the soft_limit reclaim in global background reclaim
+[33m1495f230fa775[m vmscan: change shrinker API by passing shrink_control struct
+[33ma09ed5e000844[m vmscan: change shrink_slab() interfaces by passing shrink_control
+[33m0c917313a8d84[m mm: strictly require elevated page refcount in isolate_lru_page()
+[33mf06590bd718ed[m mm: vmscan: correctly check if reclaimer should schedule during shrink_slab
+[33mafc7e326a3f5b[m mm: vmscan: correct use of pgdat_balanced in sleeping_prematurely
+[33m268bb0ce3e878[m sanitize <linux/prefetch.h> usage
+[33md6c438b6cd733[m memcg: fix zone congestion
+[33m929bea7c71422[m vmscan: all_unreclaimable() use zone->all_unreclaimable as a name
+[33m25985edcedea6[m Fix common misspellings
+[33m6c5103890057b[m Merge branch 'for-2.6.39/core' of git://git.kernel.dk/linux-2.6-block
+[33m8afdcece4911e[m mm: vmscan: kswapd should not free an excessive number of pages when balancing small zones
+[33me64a782fec684[m mm: change __remove_from_page_cache()
+[33md527caf22e484[m mm: compaction: prevent kswapd compacting memory to reduce CPU usage
+[33m4c63f5646e405[m Merge branch 'for-2.6.39/stack-plug' into for-2.6.39/core
+[33m7eaceaccab5f4[m block: remove per-queue plugging
+[33m2876592f231d4[m mm: vmscan: stop reclaim/compaction earlier due to insufficient progress if !__GFP_REPEAT
+[33mf0fdc5e8e6f57[m vmscan: fix zone shrinking exit when scan work is done
+[33mf33261d75b88f[m mm: fix deferred congestion timeout if preferred zone is not allowed
+[33m3305de51bf612[m mm/vmscan.c: remove duplicate include of compaction.h
+[33m7a608572a282a[m Revert "mm: batch activate_page() to reduce lock contention"
+[33m744ed14427577[m mm: batch activate_page() to reduce lock contention
+[33m9992af102974f[m thp: scale nr_rotated to balance memory pressure
+[33m2c888cfbc1b45[m thp: fix anon memory statistics with transparent hugepages
+[33m5a03b051ed87e[m thp: use compaction in kswapd for GFP_ATOMIC order > 0
+[33mdc83edd941f41[m mm: kswapd: use the classzone idx that kswapd was using for sleeping_prematurely()
+[33m355b09c47a0cb[m mm: kswapd: treat zone->all_unreclaimable in sleeping_prematurely similar to balance_pgdat()
+[33m4d40502ea580c[m mm: kswapd: reset kswapd_max_order and classzone_idx after reading
+[33m0abdee2bd4118[m mm: kswapd: use the order that kswapd was reclaiming at for sleeping_prematurely()
+[33m1741c87757448[m mm: kswapd: keep kswapd awake for high-order allocations until a percentage of the node is balanced
+[33m9950474883e02[m mm: kswapd: stop high-order balancing when any suitable zone is balanced
+[33mf3a310bc4e5ce[m mm: vmscan: rename lumpy_mode to reclaim_mode
+[33m77f1fe6b08b13[m mm: migration: allow migration to operate asynchronously and avoid synchronous compaction in the faster path
+[33m3e7d344970673[m mm: vmscan: reclaim order-0 and use compaction instead of lumpy reclaim
+[33mee64fc9354e51[m mm: vmscan: convert lumpy_mode into a bitmask
+[33mf0bc0a60b13f2[m vmscan: factor out kswapd sleeping logic from kswapd()
+[33mb44129b30652c[m mm: vmstat: use a single setter function and callback for adjusting percpu thresholds
+[33m88f5acf88ae6a[m mm: page allocator: adjust the per-cpu counter threshold when memory is low
+[33m6072d13c42937[m Call the filesystem back whenever a page is removed from the page cache
+[33m1dce071e18b72[m vmscan: avoid setting zone congested if no page dirty
+[33m2e30244a7cc1f[m vmscan,tmpfs: treat used once pages on tmpfs as used once
+[33m0e093d99763eb[m writeback: do not sleep on the congestion queue if there are no congested BDIs or if significant congestion is not being encountered in the current zone
+[33m08fc468f4eaf6[m vmscan: isolate_lru_pages(): stop neighbour search if neighbour cannot be isolated
+[33m47185052165a4[m vmscan: remove dead code in shrink_inactive_list()
+[33m7d3579e8e6193[m vmscan: narrow the scenarios in whcih lumpy reclaim uses synchrounous reclaim
+[33mbc57e00f5e0b2[m vmscan: synchronous lumpy reclaim should not call congestion_wait()
+[33me11da5b4fdf01[m tracing, vmscan: add trace events for LRU list shrinking
+[33m66d9a986cddbb[m vmscan: delete dead code
+[33m74e3f3c3391d8[m vmscan: prevent background aging of anon page in no swap system
+[33me4455abb50a19[m mm: only build per-node scan_unevictable functions when NUMA is enabled
+[33m1b430beee5e38[m writeback: remove nonblocking/encountered_congestion references
+[33m229aebb873e29[m Merge branch 'for-next' of git://git.kernel.org/pub/scm/linux/kernel/git/jikos/trivial
+[33md1908362ae0b9[m vmscan: check all_unreclaimable in direct reclaim path
+[33m415b54e37a5d0[m Fix typo s/contenious/continuous in comment
+[33m00918b6ab89df[m memcg: remove nid and zid argument from mem_cgroup_soft_limit_reclaim()
+[33m14fec79680f7c[m memcg: mem_cgroup_shrink_node_zone() doesn't need sc.nodemask
+[33mda280d636b83f[m memcg: kill unnecessary initialization in mem_cgroup_shrink_node_zone()
+[33mb8f5c5664d517[m memcg: sc.nr_to_reclaim should be initialized
+[33me31f3698cd349[m vmscan: raise the bar to PAGEOUT_IO_SYNC stalls
+[33mbdce6d9ebf52c[m memcg, vmscan: add memcg reclaim tracepoint
+[33m4dc4b3d971b23[m vmscan: shrink_slab() requires the number of lru_pages, not the page order
+[33m58c37f6e0dfaa[m vmscan: protect reading of reclaim_stat with lru_lock
+[33m15748048991e8[m vmscan: avoid subtraction of unsigned types
+[33m1489fa14cb757[m vmscan: update isolated page counters outside of main path in shrink_inactive_list()
+[33mabe4c3b50c3f2[m vmscan: set up pagevec as late as possible in shrink_page_list()
+[33m666356297ec4e[m vmscan: set up pagevec as late as possible in shrink_inactive_list()
+[33md4debc66d1fc1[m vmscan: remove unnecessary temporary vars in do_try_to_free_pages
+[33me247dbce5cc74[m vmscan: simplify shrink_inactive_list()
+[33m25edde0332916[m vmscan: kill prev_priority completely
+[33m755f0225e8347[m vmscan: tracing: add trace event when a page is written
+[33ma8a94d151521b[m vmscan: tracing: add trace events for LRU page isolation
+[33m33906bc5c87b5[m vmscan: tracing: add trace events for kswapd wakeup, sleeping and direct reclaim
+[33mc6a8a8c589b53[m vmscan: recalculate lru_pages on each priority
+[33mb00d3ea7cfe44[m vmscan: zone_reclaim don't call disable_swap_token()
+[33ma6aa62a0909b9[m mm/vmscan.c: fix mapping use after free
+[33m7f8275d0d660c[m mm: add context argument to shrinker callback
+[33mbb21c7ce18eff[m vmscan: fix do_try_to_free_pages() return value when priority==0 reclaim failure
+[33m8b25c6d2231b9[m vmscan: remove isolate_pages callback scan control
+[33m0aeb2339e54e4[m vmscan: remove all_unreclaimable scan control
+[33m5f53e76299cee[m vmscan: page_check_references(): check low order lumpy reclaim properly
+[33m76a33fc380c9a[m vmscan: prevent get_scan_ratio() rounding errors
+[33mc175a0ce7584e[m mm: move definition for LRU isolation modes to a header
+[33mc0ff7453bb5c7[m cpuset,mm: fix no node to alloc memory when changing cpuset's mems
+[33md6da1a5abc2bf[m mm: revert "vmscan: get_scan_ratio() cleanup"
+[33m5a0e3ad6af866[m include cleanup: Update gfp.h and slab.h includes to prepare for breaking implicit slab.h inclusion from percpu.h
+[33m645747462435d[m vmscan: detect mapped file pages used only once
+[33m31c0569c3b0b6[m vmscan: drop page_mapping_inuse()
+[33mdfc8d636cdb95[m vmscan: factor out page reference checks
+[33m93e4a89a8c987[m mm: restore zone->all_unreclaimable to independence word
+[33m76ca542d880eb[m mm, lockdep: annotate reclaim context to zone reclaim too
+[33m84b18490d1f1b[m vmscan: get_scan_ratio() cleanup
+[33m45973d74fd3b1[m vmscan: check high watermark after shrink zone
+[33mde3fab39348df[m vmscan: kswapd: don't retry balance_pgdat() if all zones are unreclaimable
+[33m62c0c2f198c1f[m vmscan: simplify code
+[33mb39415b2731d7[m vmscan: do not evict inactive pages when skipping an active list scan
+[33m338fde90930ea[m vmscan: make consistent of reclaim bale out between do_try_to_free_page and shrink_zone
+[33mece74b2e7acfb[m vmscan: kill sc.swap_cluster_max
+[33m4f0ddfdffc8be[m vmscan: zone_reclaim() don't use insane swap_cluster_max
+[33m7b51755c3b384[m vmscan: kill hibernation specific reclaim logic and unify it
+[33m22fba33545b73[m vmscan: separate sc.swap_cluster_max and sc.nr_max_reclaim
+[33mbb3ab596832b9[m vmscan: stop kswapd waiting on congestion when the min watermark is not being met
+[33mf50de2d381108[m vmscan: have kswapd sleep for a short interval and double check it should be asleep
+[33m6aceb53be44ed[m mm/vmscan: change comment generic_file_write to __generic_file_aio_write
+[33m8fe23e0571722[m mm: clear node in N_HIGH_MEMORY and stop kswapd when all memory is offlined
+[33m6a7b95481d49f[m vmscan: order evictable rescue in LRU putback
+[33m41e20983fe553[m vmscan: limit VM_EXEC protection to file pages
+[33m58355c7876a07[m congestion_wait(): don't use WRITE
+[33m6d7f18f6ea3a1[m Merge branch 'writeback' of git://git.kernel.dk/linux-2.6-block
+[33m5b0830cb9085f[m writeback: get rid to incorrect references to pdflush in comments
+[33mdb16826367fef[m Merge branch 'hwpoison' of git://git.kernel.org/pub/scm/linux/kernel/git/ak/linux-mce-2.6
+[33m8d65af789f3e2[m sysctl: remove "struct file *" argument of ->proc_handler
+[33m4e41695356fb4[m memory controller: soft limit reclaim on contention
+[33mf168e1b6390e2[m mm/vmscan: remove page_queue_congested() comment
+[33mf86296317434b[m mm: do batched scans for mem_cgroup
+[33m0b21767637c3c[m mm/vmscan: rename zone_nr_pages() to zone_nr_lru_pages()
+[33mceddc3a52d783[m mm: document is_page_cache_freeable()
+[33medcf4748cd56a[m mm: return boolean from page_has_private()
+[33m6c0b13519d1c7[m mm: return boolean from page_is_file_cache()
+[33m401a8e1c16700[m mm: introduce page_lru_base_type()
+[33mb7c46d151cb82[m mm: drop unneeded double negations
+[33ma26f5320c4ee3[m vmscan: kill unnecessary prefetch
+[33m74a1c48fb4e9f[m vmscan: kill unnecessary page flag test
+[33m5205e56eeab04[m vmscan: move ClearPageActive from move_active_pages() to shrink_active_list()
+[33mde2e7567c7ddf[m vmscan: don't attempt to reclaim anon page in lumpy reclaim when no swap space is available
+[33madea02a1bea71[m mm: count only reclaimable lru pages
+[33m35cd78156c499[m vmscan: throttle direct reclaim when too many pages are isolated already
+[33ma731286de6229[m mm: vmstat: add isolate pages
+[33mb35ea17b7bbf5[m mm: shrink_inactive_list() nr_scan accounting fix fix
+[33m44c241f166b31[m mm: rename pgmoved variable in shrink_active_list()
+[33m14fa31b89c5ae[m HWPOISON: Use bitmask/action code for try_to_unmap behaviour
+[33m03ba3782e8dcc[m writeback: switch to per-bdi threads for flushing data
+[33m03ef83af52889[m mm: fix for infinite churning of mlocked pages
+[33m8aa7e847d834e[m Fix congestion_wait() sync/async vs read/write confusion
+[33mcb4cbcf6b3cf7[m mm: fix incorrect page removal from LRU
+[33m2ffebca6aa7e1[m memcg: fix lru rotation in isolate_pages
+[33mee993b135ec75[m mm: fix lumpy reclaim lru handling at isolate_lru_pages
+[33m24cf72518c79c[m vmscan: count the number of times zone_reclaim() scans and fails
+[33mfa5e084e43eb1[m vmscan: do not unconditionally treat zones that fail zone_reclaim() as full
+[33m90afa5de6f3fa[m vmscan: properly account for the number of page cache pages zone_reclaim() can reclaim
+[33m9198e96c06744[m vmscan: handle may_swap more strictly
+[33m3eb4140f0389b[m vmscan: merge duplicate code in shrink_active_list()
+[33m8cab4754d24a0[m vmscan: make mapped executable pages the first class citizen
+[33m6fe6b7e35785e[m vmscan: report vm_flags in page_referenced()
+[33mcb4b86ba47bb0[m mm: add swap cache interface for swap reference
+[33m6837765963f17[m mm: remove CONFIG_UNEVICTABLE_LRU config option
+[33m69c854817566d[m vmscan: prevent shrinking of active anon lru list in case of no swap space V3
+[33maf166777cf451[m vmscan: ZVC updates in shrink_active_list() can be done once
+[33m6e08a369ee10b[m vmscan: cleanup the scan batching code
+[33m56e49d218890f[m vmscan: evict use-once pages first
+[33m418589663d601[m page allocator: use allocation flags as an index to the zone watermark
+[33m78dc583d3ab43[m vmscan: low order lumpy reclaim also should use PAGEOUT_IO_SYNC
+[33mc6f37f12197ac[m PM/Suspend: Do not shrink memory before suspend
+[33me767e0561d7fd[m memcg: fix deadlock between lock_page_cgroup and mapping tree_lock
+[33m8713e01295140[m vmscan: avoid multiplication overflow in shrink_zone()
+[33m2e2e425989080[m vmscan,memcg: reintroduce sc->may_swap
+[33ma21e255361694[m PM/Hibernate: Fix memory shrinking
+[33m90975ef71246c[m Merge git://git.kernel.org/pub/scm/linux/kernel/git/rusty/linux-2.6-cpumask
+[33m266cf658efcf6[m FS-Cache: Recruit a page flags for cache management
+[33m327c0e968645f[m vmscan: fix it to take care of nodemask
+[33m88c3bd707c255[m vmscan: print shrink_slab symbol name on negative shrinker objects
+[33mad1c3544d0a85[m mm: don't free swap slots on page deactivation
+[33m2443462b0a04e[m mm: move pagevec stripping to save unlock-relock
+[33mbd2f6199cf9af[m vmscan: respect higher order in zone_reclaim()
+[33m9786bf841da57[m vmscan: clip swap_cluster_max in shrink_all_memory()
+[33md979677c4c02f[m mm: shrink_all_memory(): use sc.nr_reclaimed
+[33mee99c71c59f89[m mm: introduce for_each_populated_zone() macro
+[33ma6dc60f8975ad[m vmscan: rename sc.may_swap to may_unmap
+[33m558f6ab9106e6[m Merge branch 'cpumask-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip
+[33mc4e1aa67ed9e4[m Merge branch 'locking-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip
+[33m65fb0d23fcddd[m Merge branch 'linus' into cpumask-for-linus
+[33m1d885526f2f3f[m vmscan: pgmoved should be cleared after updating recent_rotated
+[33m238a5b4bff2e0[m Merge branch 'cpus4096' of git://git.kernel.org/pub/scm/linux/kernel/git/rusty/linux-2.6-x86 into cpus4096
+[33ma70f730282019[m cpumask: replace node_to_cpumask with cpumask_of_node.
+[33mf272b7bc44755[m memcg: use correct scan number at reclaim
+[33m0cb57258fe01e[m swsusp: clean up shrink_all_zones()
+[33m3049103ddfc9a[m swsusp: dont fiddle with swappiness
+[33m6700ec65c2070[m lockdep: annotate reclaim context (__GFP_NOFS), fix
+[33mcf40bd16fdad4[m lockdep: annotate reclaim context (__GFP_NOFS)
+[33mc772be939e078[m memcg: fix calculation of active_ratio
+[33ma7885eb8ad465[m memcg: swappiness
+[33me72e2bd6747c7[m memcg: rename scan global lru
+[33m9439c1c95b5c2[m memcg: remove mem_cgroup_cal_reclaim()
+[33m3e2f41f1f6474[m memcg: add zone_reclaim_stat
+[33ma3d8e0549d913[m memcg: add mem_cgroup_zone_nr_pages()
+[33m14797e2363c2b[m memcg: add inactive_anon_is_low()
+[33meeee9a8cd1e93[m mm: make get_scan_ratio() safe for memcg
+[33mc9f299d9862de[m mm: add zone nr_pages helper function
+[33m6e9015716ae9b[m mm: introduce zone_reclaim struct
+[33mf89eb90e33fd4[m inactive_anon_is_low: move to vmscan
+[33m08e552c69c693[m memcg: synchronized LRU
+[33m8c7c6e34a1256[m memcg: mem+swap controller core
+[33m73ce02e96fe34[m mm: stop kswapd's infinite loop at high order allocation
+[33mb555749aac87d[m vmscan: shrink_active_list(): reduce lru_lock hold time
+[33m09f445e7f5107[m mm: kill zone_is_near_oom()
+[33m01dbe5c9b1004[m vmscan: improve reclaim throughput to bail out patch
+[33ma79311c14eae4[m vmscan: bail out of direct reclaim after swap_cluster_max pages
+[33m14b90b22ec0f3[m mm: make scan_zone_unevictable_pages() static
+[33mff30153bf9647[m mm: make scan_all_zones_unevictable_pages() static
+[33m077cbc5864cd9[m memcg: reclaim shouldn't change zone->recent_rotated statistics
+[33mb962716b45950[m mm: optimize get_scan_ratio for no swap
+[33m60371d971a3d0[m mm: add add_to_swap stub
+[33mac47b003d03c2[m mm: remove gfp_mask from add_to_swap
+[33m63d6c5ad7fc27[m mm: remove try_to_munlock from vmscan
+[33ma2c43eed8334e[m mm: try_to_free_swap replaces remove_exclusive_swap_page
+[33m174596a0b9f21[m cpumask: convert mm/
+[33m3e597945384de[m cpumask: remove any_online_cpu() users: mm/
+[33m2a1dc509747fd[m vmscan: protect zone rotation stats by lru lock
+[33m00d8089c54867[m vmscan: fix get_scan_ratio() comment
+[33m63eb6b93ce725[m vmscan: let GFP_NOFS go to swap again
+[33m748f1a2ed7a68[m mm: remove unevictable's show_page_path
+[33ma978d6f521063[m mm: unlockless reclaim
+[33me0f79b8f1f339[m vmscan: don't accumulate scan pressure on unrelated lists
+[33maf936a1606246[m vmscan: unevictable LRU scan sysctl
+[33mb291f000393f5[m mlock: mlocked pages are unevictable
+[33m89e004ea55abe[m SHM_LOCKED pages are unevictable
+[33mba9ddf4939164[m Ramfs and Ram Disk pages are unevictable
+[33mbbfd28eee9fbd[m unevictable lru: add event counting with statistics
+[33m894bc310419ac[m Unevictable LRU Infrastructure
+[33m33c120ed28430[m more aggressively use lumpy reclaim
+[33m7e9cd484204f9[m vmscan: fix pagecache reclaim referenced bit check
+[33m556adecba110b[m vmscan: second chance replacement for anonymous pages
+[33m4f98a2fee8acd[m vmscan: split LRU lists into anon & file sets
+[33m68a22394c286a[m vmscan: free swap space on swap-in/activation
+[33mb69408e88bd86[m vmscan: Use an indexed array for LRU variables
+[33m62695a84eb8f2[m vmscan: move isolate_lru_page() to vmscan.c
+[33m529ae9aaa0837[m mm: rename page trylock
+[33m87547ee95d81e[m do_try_to_free_page: update comments related to vmscan functions
+[33m7d03431cf98aa[m swapfile/vmscan: update comments related to vmscan functions
+[33m19fd6231279be[m mm: spinlock tree_lock
+[33me286781d5f2e9[m mm: speculative page references
+[33m873b47717732c[m per-task-delay-accounting: add memory reclaim delay
+[33mc700be3d1320d[m mm: fix incorrect variable type in do_try_to_free_pages()
+[33md40cee245ff6a[m mm: remove remaining __FUNCTION__ occurrences
+[33ma41f24ea9fd61[m page allocator: smarter retry of costly-order allocations
+[33mdd1a239f6f2d4[m mm: have zonelist contains structs with both a zone pointer and zone_idx
+[33m54a6eb5c4765a[m mm: use two zonelist that are filtered by GFP mask
+[33mdac1d27bc8d5c[m mm: use zonelists instead of zones when direct reclaiming pages
+[33mc5f59f0833df9[m nodemask: use new node_to_cpumask_ptr function
+[33m4dd4b92021832[m revert "kswapd should only wait on IO if there is IO"
+[33m427d5416f3176[m memcg: move_lists on page not page_cgroup
+[33m00f0b8259e489[m Memory controller: rename to Memory Resource Controller
+[33m1cfb419b394ba[m per-zone and reclaim enhancements for memory controller: modifies vmscan.c for isolate globa/cgroup lru activity
+[33m91a45470f7ddc[m per-zone and reclaim enhancements for memory controller: add scan_global_lru macro
+[33m417eead30434b[m memory cgroup enhancements: fix zone handling in try_to_free_mem_cgroup_page
+[33mf1a9ee758de7d[m kswapd should only wait on IO if there is IO
+[33me1a1cd590e3fc[m Memory controller: make charging gfp mask aware
+[33mbed7161a519a2[m Memory controller: make page_referenced() cgroup aware
+[33m66e1707bc3460[m Memory controller: add per cgroup LRU and reclaim
+[33m183ff22bb6bd8[m spelling fixes: mm/
+[33mc80544dc0b87b[m sparse pointer use of zero as null
+[33md773ed6b856a9[m mm: test and set zone reclaim lock before starting reclaim
+[33me815af95f9491[m oom: change all_unreclaimable zone member to flags
+[33m4106f83a9f86a[m make swappiness safer to use
+[33m58c0a4a7864b2[m Fix panic of cpu online with memory less node
+[33m37c0708dbee58[m Memoryless nodes: Add N_CPU node state
+[33m9422ffba4adc8[m Memoryless nodes: No need for kswapd
+[33m32a4330d4156e[m mm: prevent kswapd from freeing excessive amounts of lowmem
+[33mc661b078fd62a[m synchronous lumpy reclaim: wait for page writeback when directly reclaiming contiguous areas
+[33me9187bdcbbc06[m synchronous lumpy reclaim: ensure we count pages transitioning inactive via clear_active_flags
+[33m831441862956f[m Freezer: make kernel threads nonfreezable by default
+[33m8e1f936b73150[m mm: clean up and kernelify shrinker registration
+[33m5ad333eb66ff1[m Lumpy Reclaim V4
+[33m8bb7844286fb8[m Add suspend-related notifications for CPU hotplug
+[33m3e9f45bd18191[m Factor outstanding I/O error handling
+[33mb1296cc48b393[m freezer: fix racy usage of try_to_freeze in kswapd
+[33m232ea4d69d811[m [PATCH] throttle_vm_writeout(): don't loop on GFP_NOFS and GFP_NOIO allocations
+[33mc878538598d1e[m [PATCH] Use ZVC for inactive and active counts
+[33m76395d37611e8[m [PATCH] shrink_all_memory(): fix lru_pages handling
+[33m918d3f90e8d56[m [PATCH] Buglet in vmscan.c
+[33me07aa05b606de[m [PATCH] Fix swapped parameters in mm/vmscan.c
+[33m02a0e53d8227a[m [PATCH] cpuset: rework cpuset_zone_allowed api
+[33m0231606785218[m [PATCH] hotplug CPU: clean up hotcpu_notifier() use
+[33m7dfb71030f763[m [PATCH] Add include/linux/freezer.h and move definitions from sched.h
+[33m8357376d3df21[m [PATCH] swsusp: Improve handling of highmem
+[33me1dbeda60a7ea[m [PATCH] balance_pdgat() cleanup
+[33mbbdb396a60b2e[m [PATCH] Use min of two prio settings in calculating distress for reclaim
+[33m3bb1a852ab6c9[m [PATCH] vmscan: Fix temp_priority race
+[33m3fcfab16c5b86[m [PATCH] separate bdi congestion functions from queue congestion functions
+[33ma649fd9271773[m [PATCH] invalidate: remove_mapping() fix
+[33m0fd0e6b05aa09[m [PATCH] page invalidation cleanup
+[33me129b5c23c2b4[m [PATCH] vm: add per-zone writeout counter
+[33m89fa30242facc[m [PATCH] NUMA: Add zone_to_nid function
+[33m83e33a4711760[m [PATCH] zone reclaim with slab: avoid unecessary off node allocations
+[33m0ff38490c836d[m [PATCH] zone_reclaim: dynamic slab reclaim
+[33m972d1a7b14056[m [PATCH] ZVC: Support NR_SLAB_RECLAIMABLE / NR_SLAB_UNRECLAIMABLE
+[33m8417bba4b1513[m [PATCH] Replace min_unmapped_ratio by min_unmapped_pages in struct zone
+[33m4ff1ffb4870b0[m [PATCH] oom: reclaim_mapped on oom
+[33m408d85441cd5a[m [PATCH] oom: use unreclaimable info
+[33m28e4d965e6131[m [PATCH] mm: remove_mapping() safeness
+[33m725d704ecaca4[m [PATCH] mm: VM_BUG_ON
+[33m9614634fe6a13[m [PATCH] ZVC/zone_reclaim: Leave 1% of unmapped pagecache pages for file I/O
+[33mf8891e5e1f93a[m [PATCH] Light weight event counters
+[33m9a865ffa34b61[m [PATCH] zoned vm counters: conversion of nr_slab to per zone counter
+[33m34aa1330f9b3c[m [PATCH] zoned vm counters: zone_reclaim: remove /proc/sys/vm/zone_reclaim_interval
+[33mf3dbd34460ff5[m [PATCH] zoned vm counters: split NR_ANON_PAGES off from NR_FILE_MAPPED
+[33mbf02cf4b6cf93[m [PATCH] zoned vm counters: remove NR_FILE_MAPPED from scan control structure
+[33m65ba55f500a37[m [PATCH] zoned vm counters: convert nr_mapped to per zone counter
+[33m9c7b216d23e82[m [PATCH] cpu hotplug: revert init patch submitted for 2.6.17
+[33m3218ae14b1e3e[m [PATCH] pgdat allocation for new node add (export kswapd start func)
+[33mbd1e22b8e0a90[m [PATCH] initialise total_memory() earlier
+[33m04e62a29bf157[m [PATCH] More page migration: use migration entries for file pages
+[33m111ebb6e6f7bd[m [PATCH] writeback: fix range handling
+[33md6277db4ab271[m [PATCH] swsusp: rework memory shrinker
+[33mc0bbbc73d58f1[m [PATCH] typo in vmscan.c
+[33m83d722f7e198b[m [PATCH] Remove __devinit and __cpuinit from notifier_call definitions
+[33mec936fc563715[m [PATCH] for_each_online_pgdat: renaming for_each_pgdat
+[33m05eeae208d08a[m [PATCH] find_task_by_pid() needs tasklist_lock
+[33mb20a35035f983[m [PATCH] page migration reorg
+[33m248a0301e703c[m [PATCH] mm: make shrink_all_memory try harder
+[33m6e5ef1a96e6e3[m [PATCH] vmscan: emove obsolete checks from shrink_list() and fix unlikely in refill_inactive_zone()
+[33m0f8053a509ceb[m [PATCH] mm: make __put_page internal
+[33mfb8d14e172a29[m [PATCH] mm: shrink_inactive_lis() nr_scan accounting fix
+[33mc9b02d970c385[m [PATCH] mm: isolate_lru_pages() scan count fix
+[33m7fb2d46d396b2[m [PATCH] zone_reclaim: additional comments and cleanup
+[33m1742f19fa920c[m [PATCH] vmscan: rename functions
+[33m05ff51376f01f[m [PATCH] vmscan return nr_reclaimed
+[33m69e05944af39f[m [PATCH] vmscan: use unsigned longs
+[33m179e96395b1f0[m [PATCH] vmscan: scan_control cleanup
+[33m8695949a1d7c9[m [PATCH] Thin out scan_control: remove nr_to_scan and priority
+[33m7c8ee9a86340d[m [PATCH] mm: simplify vmscan vs release refcounting
+[33m4c84cacfa4242[m [PATCH] mm: PageActive no testset
+[33m8d438f96d2b8e[m [PATCH] mm: PageLRU no testset
+[33m46453a6e194a8[m [PATCH] mm: never ClearPageLRU released pages
+[33m4983da07f1e2e[m [PATCH] page migration: fail if page is in a vma flagged VM_LOCKED
+[33ma6bf527091b1d[m [PATCH] vmscan: no zone_reclaim if PF_MALLOC is set
+[33md4f7796e9b387[m [PATCH] vmscan: fix zone_reclaim
+[33m2903fb1694dcb[m [PATCH] vmscan: skip reclaim_mapped determination if we do not swap
+[33m072eaa5d9cc3e[m [PATCH] vmscan: remove duplicate increment of reclaim_in_progress
+[33m80e4342601abf[m [PATCH] zone reclaim: do not check references to a page during zone reclaim
+[33m418aade459f03[m [PATCH] Updates for page migration
+[33me965f9630c651[m [PATCH] Direct Migration V9: Avoid writeback / page_migrate() method
+[33ma3351e525e476[m [PATCH] Direct Migration V9: remove_from_swap() to remove swap ptes
+[33ma48d07afdf182[m [PATCH] Direct Migration V9: migrate_pages() extension
+[33m2a16e3f4b0c40[m [PATCH] Reclaim slab during zone reclaim
+[33m1b2ffb7896ad4[m [PATCH] Zone reclaim: Allow modification of zone reclaim behavior
+[33m2a11ff06d7d12[m [PATCH] zone_reclaim: configurable off node allocation period.
+[33ma92f71263af9d[m [PATCH] zone_reclaim: partial scans instead of full scan
+[33maa3f18b3391ac[m [PATCH] zone_reclaim: do not unmap file backed pages
+[33mc84db23c6e587[m [PATCH] zone_reclaim: minor fixes
+[33m52a8363eae387[m [PATCH] mm: improve function of sc->may_writepage
+[33m42c722d4cb402[m [PATCH] zone_reclaim: reclaim on memory only node support
+[33m8928862398fef[m [PATCH] Optimize off-node performance of zone reclaim
+[33m9eeff2395e3cf[m [PATCH] Zone reclaim: Reclaim logic
+[33mf1fd1067ece57[m [PATCH] Zone reclaim: resurrect may_swap
+[33m053837fce7aa7[m [PATCH] mm: migration page refcounting fix
+[33md0d963281ccb2[m [PATCH] SwapMig: Switch error handling in migrate_pages to use -Exx
+[33md498471133ff1[m [PATCH] SwapMig: Extend parameters for migrate_pages()
+[33mee27497df3682[m [PATCH] SwapMig: Drop unused pages immediately
+[33m1480a540c9852[m [PATCH] SwapMig: add_to_swap() avoid atomic allocations
+[33m8419c3181086c[m [PATCH] SwapMig: CONFIG_MIGRATION fixes
+[33m7cbe34cf86c67[m [PATCH] Swap Migration V5: Add CONFIG_MIGRATION for page migration support
+[33m49d2e9cc45443[m [PATCH] Swap Migration V5: migrate_pages() function
+[33m930d915252edd[m [PATCH] Swap Migration V5: PF_SWAPWRITE to allow writing to swap
+[33m21eac81f252fe[m [PATCH] Swap Migration V5: LRU operations
+[33m9d0243bca345d[m [PATCH] drop-pagecache
+[33ma74609fafa2e5[m [PATCH] mm: page_state opt
+[33mf3fe65122da05[m [PATCH] mm: add populated_zone() helper
+[33m210fe530305ee[m [PATCH] vmscan: balancing fix
+[33m7756b9e4e321c[m [PATCH] kill last zone_reclaim() bits
+[33m994fc28c7b1e6[m [PATCH] add AOP_TRUNCATED_PAGE, prepend AOP_ to WRITEPAGE_ACTIVATE
+[33mea164d73a7a0b[m [PATCH] shrinker->nr = LONG_MAX means deadlock for icache
+[33mf7b7fd8f3ebbb[m [PATCH] temporarily disable swap token on memory pressure
+[33m7fb1d9fca5c6e[m [PATCH] mm: __alloc_pages cleanup
+[33m4c21e2f2441dc[m [PATCH] mm: split page table lock
+[33mc340010e4bf82[m [PATCH] shrink_list(): skip anon pages if not may_swap
+[33m6daa0e28627ab[m [PATCH] gfp_t: mm/* (easy parts)
+[33m3d80636a0d5f0[m Fix memory ordering bug in page reclaim
+[33m8d0986e289a4b[m [PATCH] vm: kswapd cleanup: use pgdat
+[33m9bf2229f88176[m [PATCH] cpusets: formalize intermediate GFP_KERNEL containment
+[33m53e9a6159fdc6[m [PATCH] VM: zone reclaim atomic ops cleanup
+[33mbce5f6ba340b0[m [PATCH] VM: add capabilites check to set_zone_reclaim
+[33m687a21cee1700[m [PATCH] rename wakeup_bdflush to wakeup_pdflush
+[33m3e1d1d28d99da[m [PATCH] Cleanup patch for process freezing
+[33m1ad539b2bd89b[m [PATCH] vm: try_to_free_pages unused argument
+[33m1e7e5a9048b30[m [PATCH] VM: rate limit early reclaim
+[33m753ee728964e5[m [PATCH] VM: early zone reclaim
+[33mbfbb38fb808ac[m [PATCH] VM: add may_swap flag to scan_control
+[33mb15e0905f2b99[m [PATCH] vmscan: notice slab shrinking
+[33m323aca6c0bda6[m [PATCH] vmscan: pageout(): remove unneeded test
+[33m1da177e4c3f41[m[33m ([m[1;33mtag: [m[1;33mv2.6.12-rc2[m[33m)[m Linux-2.6.12-rc2
