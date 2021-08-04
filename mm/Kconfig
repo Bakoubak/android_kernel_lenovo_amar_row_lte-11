@@ -823,8 +823,6 @@ config LRU_GEN_STATS
 	  This option has a per-memcg and per-node memory overhead.
 # }
 
-endmenu
-
 config SPECULATIVE_PAGE_FAULT
        bool "Speculative page faults"
        default n
