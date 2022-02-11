@@ -1034,59 +1034,111 @@ static bool drain_entropy(void *buf, size_t nbytes)
 	return true;
 }
 
-struct fast_pool {
-	union {
-		u32 pool32[4];
-		u64 pool64[2];
-	};
-	unsigned long last;
-	u16 reg_idx;
-	u8 count;
-};
+
+/**********************************************************************
+ *
+ * Entropy collection routines.
+ *
+ * The following exported functions are used for pushing entropy into
+ * the above entropy accumulation routines:
+ *
+ *	void add_device_randomness(const void *buf, size_t size);
+ *	void add_input_randomness(unsigned int type, unsigned int code,
+ *	                          unsigned int value);
+ *	void add_disk_randomness(struct gendisk *disk);
+ *	void add_hwgenerator_randomness(const void *buffer, size_t count,
+ *					size_t entropy);
+ *	void add_bootloader_randomness(const void *buf, size_t size);
+ *	void add_interrupt_randomness(int irq);
+ *
+ * add_device_randomness() adds data to the input pool that
+ * is likely to differ between two devices (or possibly even per boot).
+ * This would be things like MAC addresses or serial numbers, or the
+ * read-out of the RTC. This does *not* credit any actual entropy to
+ * the pool, but it initializes the pool to different values for devices
+ * that might otherwise be identical and have very little entropy
+ * available to them (particularly common in the embedded world).
+ *
+ * add_input_randomness() uses the input layer interrupt timing, as well
+ * as the event type information from the hardware.
+ *
+ * add_disk_randomness() uses what amounts to the seek time of block
+ * layer request events, on a per-disk_devt basis, as input to the
+ * entropy pool. Note that high-speed solid state drives with very low
+ * seek times do not make for good sources of entropy, as their seek
+ * times are usually fairly consistent.
+ *
+ * The above two routines try to estimate how many bits of entropy
+ * to credit. They do this by keeping track of the first and second
+ * order deltas of the event timings.
+ *
+ * add_hwgenerator_randomness() is for true hardware RNGs, and will credit
+ * entropy as specified by the caller. If the entropy pool is full it will
+ * block until more entropy is needed.
+ *
+ * add_bootloader_randomness() is the same as add_hwgenerator_randomness() or
+ * add_device_randomness(), depending on whether or not the configuration
+ * option CONFIG_RANDOM_TRUST_BOOTLOADER is set.
+ *
+ * add_interrupt_randomness() uses the interrupt timing as random
+ * inputs to the entropy pool. Using the cycle counters and the irq source
+ * as inputs, it feeds the input pool roughly once a second or after 64
+ * interrupts, crediting 1 bit of entropy for whichever comes first.
+ *
+ **********************************************************************/
+
+static bool trust_cpu __ro_after_init = IS_ENABLED(CONFIG_RANDOM_TRUST_CPU);
+static int __init parse_trust_cpu(char *arg)
+{
+	return kstrtobool(arg, &trust_cpu);
+}
+early_param("random.trust_cpu", parse_trust_cpu);
 
 /*
- * This is a fast mixing routine used by the interrupt randomness
- * collector.  It's hardcoded for an 128 bit pool and assumes that any
- * locks that might be needed are taken by the caller.
+ * The first collection of entropy occurs at system boot while interrupts
+ * are still turned off. Here we push in RDSEED, a timestamp, and utsname().
+ * Depending on the above configuration knob, RDSEED may be considered
+ * sufficient for initialization. Note that much earlier setup may already
+ * have pushed entropy into the input pool by the time we get here.
  */
-static void fast_mix(u32 pool[4])
+int __init rand_initialize(void)
 {
-	u32 a = pool[0],	b = pool[1];
-	u32 c = pool[2],	d = pool[3];
+	size_t i;
+	ktime_t now = ktime_get_real();
+	bool arch_init = true;
+	unsigned long rv;
 
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
+	for (i = 0; i < BLAKE2S_BLOCK_SIZE; i += sizeof(rv)) {
+		if (!arch_get_random_seed_long_early(&rv) &&
+		    !arch_get_random_long_early(&rv)) {
+			rv = random_get_entropy();
+			arch_init = false;
+		}
+		mix_pool_bytes(&rv, sizeof(rv));
+	}
+	mix_pool_bytes(&now, sizeof(now));
+	mix_pool_bytes(utsname(), sizeof(*(utsname())));
 
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
+	extract_entropy(base_crng.key, sizeof(base_crng.key));
+	++base_crng.generation;
 
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
+	if (arch_init && trust_cpu && crng_init < 2) {
+		crng_init = 2;
+		pr_notice("crng init done (trusting CPU's manufacturer)\n");
+	}
 
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
-
-	pool[0] = a;  pool[1] = b;
-	pool[2] = c;  pool[3] = d;
+	if (ratelimit_disable) {
+		urandom_warning.interval = 0;
+		unseeded_warning.interval = 0;
+	}
+	return 0;
 }
-
-/*********************************************************************
- *
- * Entropy input management
- *
- *********************************************************************/
 
 /* There is one of these per entropy source */
 struct timer_rand_state {
 	cycles_t last_time;
 	long last_delta, last_delta2;
 };
-
-#define INIT_TIMER_RAND_STATE { INITIAL_JIFFIES, };
 
 /*
  * Add device- or boot-specific data to the input pool to help
@@ -1110,8 +1162,6 @@ void add_device_randomness(const void *buf, size_t size)
 	spin_unlock_irqrestore(&input_pool.lock, flags);
 }
 EXPORT_SYMBOL(add_device_randomness);
-
-static struct timer_rand_state input_timer_state = INIT_TIMER_RAND_STATE;
 
 /*
  * This function adds entropy to the entropy "pool" by using timing
@@ -1174,8 +1224,9 @@ void add_input_randomness(unsigned int type, unsigned int code,
 			  unsigned int value)
 {
 	static unsigned char last_value;
+	static struct timer_rand_state input_timer_state = { INITIAL_JIFFIES };
 
-	/* ignore autorepeat and the like */
+	/* Ignore autorepeat and the like. */
 	if (value == last_value)
 		return;
 
@@ -1184,6 +1235,119 @@ void add_input_randomness(unsigned int type, unsigned int code,
 			     (type << 4) ^ code ^ (code >> 4) ^ value);
 }
 EXPORT_SYMBOL_GPL(add_input_randomness);
+
+#ifdef CONFIG_BLOCK
+void add_disk_randomness(struct gendisk *disk)
+{
+	if (!disk || !disk->random)
+		return;
+	/* First major is 1, so we get >= 0x200 here. */
+	add_timer_randomness(disk->random, 0x100 + disk_devt(disk));
+}
+EXPORT_SYMBOL_GPL(add_disk_randomness);
+
+void rand_initialize_disk(struct gendisk *disk)
+{
+	struct timer_rand_state *state;
+
+	/*
+	 * If kzalloc returns null, we just won't use that entropy
+	 * source.
+	 */
+	state = kzalloc(sizeof(struct timer_rand_state), GFP_KERNEL);
+	if (state) {
+		state->last_time = INITIAL_JIFFIES;
+		disk->random = state;
+	}
+}
+#endif
+
+/*
+ * Interface for in-kernel drivers of true hardware RNGs.
+ * Those devices may produce endless random bits and will be throttled
+ * when our pool is full.
+ */
+void add_hwgenerator_randomness(const void *buffer, size_t count,
+				size_t entropy)
+{
+	if (unlikely(crng_init == 0)) {
+		size_t ret = crng_fast_load(buffer, count);
+		mix_pool_bytes(buffer, ret);
+		count -= ret;
+		buffer += ret;
+		if (!count || crng_init == 0)
+			return;
+	}
+
+	/*
+	 * Throttle writing if we're above the trickle threshold.
+	 * We'll be woken up again once below POOL_MIN_BITS, when
+	 * the calling thread is about to terminate, or once
+	 * CRNG_RESEED_INTERVAL has elapsed.
+	 */
+	wait_event_interruptible_timeout(random_write_wait,
+			!system_wq || kthread_should_stop() ||
+			input_pool.entropy_count < POOL_MIN_BITS,
+			CRNG_RESEED_INTERVAL);
+	mix_pool_bytes(buffer, count);
+	credit_entropy_bits(entropy);
+}
+EXPORT_SYMBOL_GPL(add_hwgenerator_randomness);
+
+/*
+ * Handle random seed passed by bootloader.
+ * If the seed is trustworthy, it would be regarded as hardware RNGs. Otherwise
+ * it would be regarded as device data.
+ * The decision is controlled by CONFIG_RANDOM_TRUST_BOOTLOADER.
+ */
+void add_bootloader_randomness(const void *buf, size_t size)
+{
+	if (IS_ENABLED(CONFIG_RANDOM_TRUST_BOOTLOADER))
+		add_hwgenerator_randomness(buf, size, size * 8);
+	else
+		add_device_randomness(buf, size);
+}
+EXPORT_SYMBOL_GPL(add_bootloader_randomness);
+
+struct fast_pool {
+	union {
+		u32 pool32[4];
+		u64 pool64[2];
+	};
+	unsigned long last;
+	u16 reg_idx;
+	u8 count;
+};
+
+/*
+ * This is a fast mixing routine used by the interrupt randomness
+ * collector. It's hardcoded for an 128 bit pool and assumes that any
+ * locks that might be needed are taken by the caller.
+ */
+static void fast_mix(u32 pool[4])
+{
+	u32 a = pool[0],	b = pool[1];
+	u32 c = pool[2],	d = pool[3];
+
+	a += b;			c += d;
+	b = rol32(b, 6);	d = rol32(d, 27);
+	d ^= a;			b ^= c;
+
+	a += b;			c += d;
+	b = rol32(b, 16);	d = rol32(d, 14);
+	d ^= a;			b ^= c;
+
+	a += b;			c += d;
+	b = rol32(b, 6);	d = rol32(d, 27);
+	d ^= a;			b ^= c;
+
+	a += b;			c += d;
+	b = rol32(b, 16);	d = rol32(d, 14);
+	d ^= a;			b ^= c;
+
+	pool[0] = a;  pool[1] = b;
+	pool[2] = c;  pool[3] = d;
+}
 
 static DEFINE_PER_CPU(struct fast_pool, irq_randomness);
 
@@ -1254,62 +1418,339 @@ void add_interrupt_randomness(int irq)
 
 	fast_pool->count = 0;
 
-	/* award one bit for the contents of the fast pool */
+	/* Award one bit for the contents of the fast pool. */
 	credit_entropy_bits(1);
 }
 EXPORT_SYMBOL_GPL(add_interrupt_randomness);
 
-#ifdef CONFIG_BLOCK
-void add_disk_randomness(struct gendisk *disk)
-{
-	if (!disk || !disk->random)
-		return;
-	/* first major is 1, so we get >= 0x200 here */
-	add_timer_randomness(disk->random, 0x100 + disk_devt(disk));
-}
-EXPORT_SYMBOL_GPL(add_disk_randomness);
-#endif
-
-/* Interface for in-kernel drivers of true hardware RNGs.
- * Those devices may produce endless random bits and will be throttled
- * when our pool is full.
+/*
+ * Each time the timer fires, we expect that we got an unpredictable
+ * jump in the cycle counter. Even if the timer is running on another
+ * CPU, the timer activity will be touching the stack of the CPU that is
+ * generating entropy..
+ *
+ * Note that we don't re-arm the timer in the timer itself - we are
+ * happy to be scheduled away, since that just makes the load more
+ * complex, but we do not want the timer to keep ticking unless the
+ * entropy loop is running.
+ *
+ * So the re-arming always happens in the entropy loop itself.
  */
-void add_hwgenerator_randomness(const void *buffer, size_t count,
-				size_t entropy)
+static void entropy_timer(struct timer_list *t)
 {
-	if (unlikely(crng_init == 0)) {
-		size_t ret = crng_fast_load(buffer, count);
-		mix_pool_bytes(buffer, ret);
-		count -= ret;
-		buffer += ret;
-		if (!count || crng_init == 0)
-			return;
+	credit_entropy_bits(1);
+}
+
+/*
+ * If we have an actual cycle counter, see if we can
+ * generate enough entropy with timing noise
+ */
+static void try_to_generate_entropy(void)
+{
+	struct {
+		unsigned long now;
+		struct timer_list timer;
+	} stack;
+
+	stack.now = random_get_entropy();
+
+	/* Slow counter - or none. Don't even bother */
+	if (stack.now == random_get_entropy())
+		return;
+
+	timer_setup_on_stack(&stack.timer, entropy_timer, 0);
+	while (!crng_ready()) {
+		if (!timer_pending(&stack.timer))
+			mod_timer(&stack.timer, jiffies + 1);
+		mix_pool_bytes(&stack.now, sizeof(stack.now));
+		schedule();
+		stack.now = random_get_entropy();
 	}
 
-	/* Throttle writing if we're above the trickle threshold.
-	 * We'll be woken up again once below POOL_MIN_BITS, when
-	 * the calling thread is about to terminate, or once
-	 * CRNG_RESEED_INTERVAL has elapsed.
-	 */
-	wait_event_interruptible_timeout(random_write_wait,
-			!system_wq || kthread_should_stop() ||
-			input_pool.entropy_count < POOL_MIN_BITS,
-			CRNG_RESEED_INTERVAL);
-	mix_pool_bytes(buffer, count);
-	credit_entropy_bits(entropy);
+	del_timer_sync(&stack.timer);
+	destroy_timer_on_stack(&stack.timer);
+	mix_pool_bytes(&stack.now, sizeof(stack.now));
 }
-EXPORT_SYMBOL_GPL(add_hwgenerator_randomness);
 
-/* Handle random seed passed by bootloader.
- * If the seed is trustworthy, it would be regarded as hardware RNGs. Otherwise
- * it would be regarded as device data.
- * The decision is controlled by CONFIG_RANDOM_TRUST_BOOTLOADER.
- */
-void add_bootloader_randomness(const void *buf, size_t size)
+static ssize_t urandom_read(struct file *file, char __user *buf, size_t nbytes,
+			    loff_t *ppos)
 {
-	if (IS_ENABLED(CONFIG_RANDOM_TRUST_BOOTLOADER))
-		add_hwgenerator_randomness(buf, size, size * 8);
-	else
-		add_device_randomness(buf, size);
+	static int maxwarn = 10;
+
+	if (!crng_ready() && maxwarn > 0) {
+		maxwarn--;
+		if (__ratelimit(&urandom_warning))
+			pr_notice("%s: uninitialized urandom read (%zd bytes read)\n",
+				  current->comm, nbytes);
+	}
+
+	return get_random_bytes_user(buf, nbytes);
 }
-EXPORT_SYMBOL_GPL(add_bootloader_randomness);
+
+static ssize_t random_read(struct file *file, char __user *buf, size_t nbytes,
+			   loff_t *ppos)
+{
+	int ret;
+
+	ret = wait_for_random_bytes();
+	if (ret != 0)
+		return ret;
+	return get_random_bytes_user(buf, nbytes);
+}
+
+static __poll_t random_poll(struct file *file, poll_table *wait)
+{
+	__poll_t mask;
+
+	poll_wait(file, &crng_init_wait, wait);
+	poll_wait(file, &random_write_wait, wait);
+	mask = 0;
+	if (crng_ready())
+		mask |= EPOLLIN | EPOLLRDNORM;
+	if (input_pool.entropy_count < POOL_MIN_BITS)
+		mask |= EPOLLOUT | EPOLLWRNORM;
+	return mask;
+}
+
+static int write_pool(const char __user *ubuf, size_t count)
+{
+	size_t len;
+	int ret = 0;
+	u8 block[BLAKE2S_BLOCK_SIZE];
+
+	while (count) {
+		len = min(count, sizeof(block));
+		if (copy_from_user(block, ubuf, len)) {
+			ret = -EFAULT;
+			goto out;
+		}
+		count -= len;
+		ubuf += len;
+		mix_pool_bytes(block, len);
+		cond_resched();
+	}
+
+out:
+	memzero_explicit(block, sizeof(block));
+	return ret;
+}
+
+static ssize_t random_write(struct file *file, const char __user *buffer,
+			    size_t count, loff_t *ppos)
+{
+	int ret;
+
+	ret = write_pool(buffer, count);
+	if (ret)
+		return ret;
+
+	return (ssize_t)count;
+}
+
+static long random_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
+	int size, ent_count;
+	int __user *p = (int __user *)arg;
+	int retval;
+
+	switch (cmd) {
+	case RNDGETENTCNT:
+		/* inherently racy, no point locking */
+		if (put_user(input_pool.entropy_count, p))
+			return -EFAULT;
+		return 0;
+	case RNDADDTOENTCNT:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (get_user(ent_count, p))
+			return -EFAULT;
+		if (ent_count < 0)
+			return -EINVAL;
+		credit_entropy_bits(ent_count);
+		return 0;
+	case RNDADDENTROPY:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (get_user(ent_count, p++))
+			return -EFAULT;
+		if (ent_count < 0)
+			return -EINVAL;
+		if (get_user(size, p++))
+			return -EFAULT;
+		retval = write_pool((const char __user *)p, size);
+		if (retval < 0)
+			return retval;
+		credit_entropy_bits(ent_count);
+		return 0;
+	case RNDZAPENTCNT:
+	case RNDCLEARPOOL:
+		/*
+		 * Clear the entropy pool counters. We no longer clear
+		 * the entropy pool, as that's silly.
+		 */
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (xchg(&input_pool.entropy_count, 0)) {
+			wake_up_interruptible(&random_write_wait);
+			kill_fasync(&fasync, SIGIO, POLL_OUT);
+		}
+		return 0;
+	case RNDRESEEDCRNG:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		if (crng_init < 2)
+			return -ENODATA;
+		crng_reseed();
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
+
+static int random_fasync(int fd, struct file *filp, int on)
+{
+	return fasync_helper(fd, filp, on, &fasync);
+}
+
+const struct file_operations random_fops = {
+	.read = random_read,
+	.write = random_write,
+	.poll = random_poll,
+	.unlocked_ioctl = random_ioctl,
+	.fasync = random_fasync,
+	.llseek = noop_llseek,
+};
+
+const struct file_operations urandom_fops = {
+	.read = urandom_read,
+	.write = random_write,
+	.unlocked_ioctl = random_ioctl,
+	.fasync = random_fasync,
+	.llseek = noop_llseek,
+};
+
+SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count, unsigned int,
+		flags)
+{
+	if (flags & ~(GRND_NONBLOCK | GRND_RANDOM | GRND_INSECURE))
+		return -EINVAL;
+
+	/*
+	 * Requesting insecure and blocking randomness at the same time makes
+	 * no sense.
+	 */
+	if ((flags & (GRND_INSECURE | GRND_RANDOM)) == (GRND_INSECURE | GRND_RANDOM))
+		return -EINVAL;
+
+	if (count > INT_MAX)
+		count = INT_MAX;
+
+	if (!(flags & GRND_INSECURE) && !crng_ready()) {
+		int ret;
+
+		if (flags & GRND_NONBLOCK)
+			return -EAGAIN;
+		ret = wait_for_random_bytes();
+		if (unlikely(ret))
+			return ret;
+	}
+	return get_random_bytes_user(buf, count);
+}
+
+/********************************************************************
+ *
+ * Sysctl interface
+ *
+ ********************************************************************/
+
+#ifdef CONFIG_SYSCTL
+
+#include <linux/sysctl.h>
+
+static int random_min_urandom_seed = 60;
+static int random_write_wakeup_bits = POOL_MIN_BITS;
+static int sysctl_poolsize = POOL_BITS;
+static char sysctl_bootid[16];
+
+/*
+ * This function is used to return both the bootid UUID, and random
+ * UUID.  The difference is in whether table->data is NULL; if it is,
+ * then a new UUID is generated and returned to the user.
+ *
+ * If the user accesses this via the proc interface, the UUID will be
+ * returned as an ASCII string in the standard UUID format; if via the
+ * sysctl system call, as 16 bytes of binary data.
+ */
+static int proc_do_uuid(struct ctl_table *table, int write,
+			void __user *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct ctl_table fake_table;
+	unsigned char buf[64], tmp_uuid[16], *uuid;
+
+	uuid = table->data;
+	if (!uuid) {
+		uuid = tmp_uuid;
+		generate_random_uuid(uuid);
+	} else {
+		static DEFINE_SPINLOCK(bootid_spinlock);
+
+		spin_lock(&bootid_spinlock);
+		if (!uuid[8])
+			generate_random_uuid(uuid);
+		spin_unlock(&bootid_spinlock);
+	}
+
+	sprintf(buf, "%pU", uuid);
+
+	fake_table.data = buf;
+	fake_table.maxlen = sizeof(buf);
+
+	return proc_dostring(&fake_table, write, buffer, lenp, ppos);
+}
+
+extern struct ctl_table random_table[];
+struct ctl_table random_table[] = {
+	{
+		.procname	= "poolsize",
+		.data		= &sysctl_poolsize,
+		.maxlen		= sizeof(int),
+		.mode		= 0444,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "entropy_avail",
+		.data		= &input_pool.entropy_count,
+		.maxlen		= sizeof(int),
+		.mode		= 0444,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "write_wakeup_threshold",
+		.data		= &random_write_wakeup_bits,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "urandom_min_reseed_secs",
+		.data		= &random_min_urandom_seed,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec,
+	},
+	{
+		.procname	= "boot_id",
+		.data		= &sysctl_bootid,
+		.maxlen		= 16,
+		.mode		= 0444,
+		.proc_handler	= proc_do_uuid,
+	},
+	{
+		.procname	= "uuid",
+		.maxlen		= 16,
+		.mode		= 0444,
+		.proc_handler	= proc_do_uuid,
+	},
+	{ }
+};
+#endif	/* CONFIG_SYSCTL */
