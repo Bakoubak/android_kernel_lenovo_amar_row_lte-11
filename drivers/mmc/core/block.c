@@ -1508,7 +1508,12 @@ static void mmc_blk_cqe_complete_rq(struct mmc_queue *mq, struct request *req)
 		else {
 			mt_biolog_cqhci_complete(req->tag);
 			__blk_mq_end_request(req, BLK_STS_OK);
+<<<<<<< HEAD
 		}
+=======
+	} else if (mq->in_recovery) {
+		blk_mq_requeue_request(req, true);
+>>>>>>> 3a60bb4510ff (mmc: block: Do not lose cache flush during CQE error recovery)
 	} else {
 		blk_mq_end_request(req, BLK_STS_OK);
 	}
