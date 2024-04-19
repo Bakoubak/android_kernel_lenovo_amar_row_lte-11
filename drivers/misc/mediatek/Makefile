@@ -6,6 +6,7 @@ subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
 subdir-ccflags-y += -I$(srctree)/drivers/mmc/host/mediatek/$(MTK_PLATFORM)
 
 obj-$(CONFIG_MTK_MET) += met_drv/
+obj-y += met_drv_v2/
 obj-$(CONFIG_MTK_BASE_POWER) += base/
 obj-$(CONFIG_MTK_PWM)	    += pwm/
 obj-$(CONFIG_MTK_IRTX_PWM_SUPPORT) += irtx/
@@ -122,3 +123,13 @@ obj-$(CONFIG_MTK_SECURITY_SW_SUPPORT) += masp/
 obj-y += rps/
 obj-y += devinfo/
 
+ifeq ($(CONFIG_MACH_MT6768),y)
+obj-y += spi_slave_drv/
+endif
+obj-$(CONFIG_MTK_MT6382_BDG) += spi_slave_drv/
+obj-$(CONFIG_MTK_SDA) += sda/
+obj-$(CONFIG_MTK_MDDP_SUPPORT) += mddp/
+obj-$(CONFIG_MTK_GATE_IC) += gate_ic/
+obj-$(CONFIG_MTK_FREQ_HOPPING) += freqhopping/
+obj-$(CONFIG_MTK_TASK_TURBO) += task_turbo/
+obj-$(CONFIG_MTK_FPSGO_V3) += fpsgo_cus/
