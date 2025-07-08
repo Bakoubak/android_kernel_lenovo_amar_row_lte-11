@@ -300,7 +300,9 @@ void mtk_idle_pre_process_by_chip(
 							, WD_REQ_RST_MODE);
 			wd_api->wd_suspend_notify();
 		} else {
+#ifdef CONFIG_MTK_AEE_FEATURE
 			aee_sram_printk("FAILED TO GET WD API\n");
+#endif
 			pr_info("[IDLE] FAILED TO GET WD API\n");
 		}
 #else
@@ -386,9 +388,11 @@ void mtk_idle_post_process_by_chip(
 			if (!pwrctrl->wdt_disable)
 				wd_api->wd_resume_notify();
 			else {
+#ifdef CONFIG_MTK_AEE_FEATURE
 				aee_sram_printk(
 					"pwrctrl->wdt_disable %d\n",
 						pwrctrl->wdt_disable);
+#endif
 				pr_info(
 					"[SPM] pwrctrl->wdt_disable %d\n",
 						pwrctrl->wdt_disable);

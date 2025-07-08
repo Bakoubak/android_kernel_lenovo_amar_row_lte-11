@@ -537,16 +537,20 @@ void aee_zap_locks(void)
 	if (!p_logbuf_lock) {
 		p_logbuf_lock = (void *)aee_addr_find("logbuf_lock");
 		if (!p_logbuf_lock) {
+#ifdef CONFIG_MTK_AEE_FEATURE
 			aee_sram_printk("%s failed to get logbuf lock\n",
 					__func__);
+#endif
 			return;
 		}
 	}
 	if (!p_console_sem) {
 		p_console_sem = (void *)aee_addr_find("console_sem");
 		if (!p_console_sem) {
+#ifdef CONFIG_MTK_AEE_FEATURE
 			aee_sram_printk("%s failed to get console_sem\n",
 					__func__);
+#endif
 			return;
 		}
 	}
@@ -563,8 +567,10 @@ void aee_reinit_die_lock(void)
 	if (!p_die_lock) {
 		p_die_lock = (void *)aee_addr_find("die_lock");
 		if (!p_die_lock) {
+#ifdef CONFIG_MTK_AEE_FEATURE
 			aee_sram_printk("%s failed to get die_lock\n",
 					__func__);
+#endif
 			return;
 		}
 	}
@@ -744,8 +750,10 @@ void aee_reinit_die_lock(void)
 	if (!p_die_lock) {
 		p_die_lock = (void *)kallsyms_lookup_name("die_lock");
 		if (!p_die_lock) {
+#ifdef CONFIG_MTK_AEE_FEATURE
 			aee_sram_printk("%s failed to get die_lock\n",
 					__func__);
+#endif
 			return;
 		}
 	}
