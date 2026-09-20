@@ -1077,27 +1077,33 @@ next_step:
 
 		if (phase == 3) {
 			inode = f2fs_iget(sb, dni.ino);
-			if (IS_ERR(inode) || is_bad_inode(inode) || special_file(inode->i_mode)) {
+			if (IS_ERR(inode)) {
 				set_sbi_flag(sbi, SBI_NEED_FSCK);
+				continue;
+			}
+			if (is_bad_inode(inode) ||
+			    special_file(inode->i_mode)) {
+				set_sbi_flag(sbi, SBI_NEED_FSCK);
+				add_gc_inode(gc_list, inode);
 				continue;
 			}
 
 			if (!down_write_trylock(
-				&F2FS_I(inode)->i_gc_rwsem[WRITE])) {
-				iput(inode);
+				    &F2FS_I(inode)->i_gc_rwsem[WRITE])) {
+				add_gc_inode(gc_list, inode);
 				sbi->skipped_gc_rwsem++;
 				continue;
 			}
 
 			start_bidx = f2fs_start_bidx_of_node(nofs, inode) +
-								ofs_in_node;
+				     ofs_in_node;
 
 			if (f2fs_post_read_required(inode)) {
 				int err = ra_data_block(inode, start_bidx);
 
 				up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
 				if (err) {
-					iput(inode);
+					add_gc_inode(gc_list, inode);
 					continue;
 				}
 				add_gc_inode(gc_list, inode);
@@ -1108,7 +1114,7 @@ next_step:
 						start_bidx, REQ_RAHEAD, true);
 			up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
 			if (IS_ERR(data_page)) {
-				iput(inode);
+				add_gc_inode(gc_list, inode);
 				continue;
 			}
 
