@@ -1,5 +1,9 @@
 #!/bin/bash
 
+export CCACHE_DIR=/mnt/data-1t/ccache
+
+ccache -M 30G
+
 export PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/bin/:$PATH
 export PATH=$PWD/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/:$PATH
 
@@ -9,5 +13,5 @@ if [ -d "./out" ]; then
     mkdir -p ./out
 fi
 
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-androidkernel- CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld LD_LIBRARY_PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/lib64: NM=llvm-nm OBJCOPY=llvm-objcopy CC=clang ROOTDIR=$PWD O=out amar_row_lte_defconfig
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-androidkernel- CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld LD_LIBRARY_PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/lib64: NM=llvm-nm OBJCOPY=llvm-objcopy CC=clang ROOTDIR=$PWD O=out O=out -j32
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-androidkernel- CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld LD_LIBRARY_PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/lib64: NM=llvm-nm OBJCOPY=llvm-objcopy CC="ccache clang" LLVM=1 LLVM_IAS=1 ROOTDIR=$PWD O=out amar_row_lte_defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-androidkernel- CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld LD_LIBRARY_PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/lib64: NM=llvm-nm OBJCOPY=llvm-objcopy CC="ccache clang" LLVM=1 LLVM_IAS=1 ROOTDIR=$PWD O=out O=out -j32
