@@ -259,9 +259,6 @@ static void connlog_ring_emi_to_cache(int conn_type)
 	static DEFINE_RATELIMIT_STATE(_rs, 10 * HZ, 1);
 	static DEFINE_RATELIMIT_STATE(_rs2, HZ, 1);
 
-	ratelimit_set_flags(&_rs, RATELIMIT_MSG_ON_RELEASE);
-	ratelimit_set_flags(&_rs2, RATELIMIT_MSG_ON_RELEASE);
-
 	if (conn_type < 0 || conn_type >= CONNLOG_TYPE_END)
 		return;
 
@@ -688,7 +685,7 @@ static enum alarmtimer_restart alarm_timer_handler(struct alarm *alarm,
 	unsigned int tsec, tusec;
 
 	connsys_dedicated_log_get_utc_time(&tsec, &tusec);
-	rtc_time64_to_tm(tsec, &tm);
+	rtc_time_to_tm(tsec, &tm);
 	pr_info("[connsys_log_alarm] alarm_timer triggered [%d-%02d-%02d %02d:%02d:%02d.%09u]"
 			, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday
 			, tm.tm_hour, tm.tm_min, tm.tm_sec, tusec);
@@ -720,9 +717,6 @@ static void connlog_log_data_handler(struct work_struct *work)
 	int module = 0;
 	static DEFINE_RATELIMIT_STATE(_rs, 10 * HZ, 1);
 	static DEFINE_RATELIMIT_STATE(_rs2, 2 * HZ, 1);
-
-	ratelimit_set_flags(&_rs, RATELIMIT_MSG_ON_RELEASE);
-	ratelimit_set_flags(&_rs2, RATELIMIT_MSG_ON_RELEASE);
 
 	do {
 		ret = 0;
@@ -858,8 +852,6 @@ static int connlog_set_ring_buffer_base_addr(void)
 	EMI_WRITE32(gDev.virAddrEmiLogBase + 20, emi_offset_table[CONNLOG_TYPE_BT].emi_size);
 	EMI_WRITE32(gDev.virAddrEmiLogBase + 24, emi_offset_table[CONNLOG_TYPE_GPS].emi_base_offset);
 	EMI_WRITE32(gDev.virAddrEmiLogBase + 28, emi_offset_table[CONNLOG_TYPE_GPS].emi_size);
-	/* set state to resume initially */
-	EMI_WRITE32(gDev.virAddrEmiLogBase + 32, 1);
 	return 0;
 }
 
@@ -888,7 +880,7 @@ static int connlog_emi_init(phys_addr_t emi_base, const struct connlog_emi_confi
 	}
 
 	gDev.phyAddrEmiBase = emi_base;
-	gDev.virAddrEmiLogBase = ioremap(gDev.phyAddrEmiBase +
+	gDev.virAddrEmiLogBase = ioremap_nocache(gDev.phyAddrEmiBase +
 		emi_config->emi_offset, emi_config->emi_size_total);
 	if (gDev.virAddrEmiLogBase) {
 		pr_info("EMI mapping OK virtual(0x%p) physical(0x%x)\n",
@@ -1227,8 +1219,6 @@ ssize_t connsys_log_read_to_user(int conn_type, char __user *buf, size_t count)
 	struct ring *ring;
 	unsigned int size = 0;
 
-	ratelimit_set_flags(&_rs, RATELIMIT_MSG_ON_RELEASE);
-
 	if (conn_type < 0 || conn_type >= CONNLOG_TYPE_END)
 		return 0;
 
@@ -1357,30 +1347,3 @@ int connsys_dedicated_log_get_log_mode(void)
 {
 	return atomic_read(&log_mode);
 }
-
-/*****************************************************************************
-* FUNCTION
-*  connsys_dedicated_log_set_ap_state
-* DESCRIPTION
-*  set ap state
-* PARAMETERS
-*  int state  0:suspend, 1:resume
-* RETURNS
-*  0: successfuly, negative if error
-*****************************************************************************/
-int connsys_dedicated_log_set_ap_state(int state)
-{
-	if (!gDev.virAddrEmiLogBase) {
-		pr_notice("%s gDev.virAddrEmiLogBase is NULL\n", __func__);
-		return -1;
-	}
-
-	if (state < 0 || state > 1) {
-		pr_notice("%s state = %d is unexpected\n", __func__, state);
-		return -1;
-	}
-
-	EMI_WRITE32(gDev.virAddrEmiLogBase + 32,  state);
-	return 0;
-}
-

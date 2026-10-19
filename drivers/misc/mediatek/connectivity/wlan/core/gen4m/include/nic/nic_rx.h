@@ -73,10 +73,6 @@
  *******************************************************************************
  */
 
-#if (CFG_SUPPORT_ICS == 1)
-#define ICS_BIN_LOG_MAGIC_NUM	0x44E98CAF
-#endif /* CFG_SUPPORT_ICS */
-
 #define UNIFIED_MAC_RX_FORMAT               1
 
 #define MAX_SEQ_NO                  4095
@@ -172,9 +168,7 @@
 #define CIPHER_SUITE_WEP128             7
 #define CIPHER_SUITE_WPI                8
 #define CIPHER_SUITE_CCMP_W_CCX         9
-#define CIPHER_SUITE_CCMP_256           10
-#define CIPHER_SUITE_GCMP_128           11
-#define CIPHER_SUITE_GCMP_256           12
+#define CIPHER_SUITE_GCMP               10
 
 /*------------------------------------------------------------------------------
  * Bit fields for HW_MAC_RX_DESC_T
@@ -237,9 +231,9 @@
 #define RX_STATUS_UDF_VLT               BIT(10)
 #define RX_STATUS_FRAG                  BIT(11)
 #define RX_STATUS_NULL                  BIT(12)
-#define RX_STATUS_NON_DATA              BIT(13)
-#define RX_STATUS_NON_AMPDU_SUB_FRAME   BIT(14)
-#define RX_STATUS_NON_AMPDU_FORMAT      BIT(15)
+#define RX_STATUS_DATA                  BIT(13)
+#define RX_STATUS_AMPDU_SUB_FRAME       BIT(14)
+#define RX_STATUS_AMPDU_FORMAT          BIT(15)
 #define PAYLOAD_FORMAT_IS_MSDU_FRAME    0
 #define RX_STATUS_FLAG_ERROR_MASK \
 	(RX_STATUS_FLAG_FCS_ERROR | RX_STATUS_FLAG_ICV_ERROR | \
@@ -527,7 +521,9 @@
 #define RADIOTAP_VHT_BAND_GROUP_ID_KNOWN	BIT(7)
 #define RADIOTAP_VHT_BAND_PARTIAL_AID_KNOWN	BIT(8)
 
+#if CFG_MTK_MCIF_WIFI_SUPPORT
 #define NIC_RX_ROOM_SIZE (32 + 32)
+#endif
 
 /*******************************************************************************
  *                             D A T A   T Y P E S
@@ -577,17 +573,6 @@ enum ENUM_RX_STATISTIC_COUNTER {
 	RX_CSUM_UNKNOWN_L3_PKT_COUNT,
 	RX_IP_V6_PKT_CCOUNT,
 #endif
-	RX_ICS_LOG_COUNT,
-	RX_SNIFFER_LOG_COUNT,
-#if CFG_SUPPORT_BAR_DELAY_INDICATION
-	RX_BAR_DELAY_COUNT,
-#endif /* CFG_SUPPORT_BAR_DELAY_INDICATION */
-	RX_FCS_ERR_DROP_COUNT,
-	RX_DAF_ERR_DROP_COUNT,
-	RX_ICV_ERR_DROP_COUNT,
-	RX_TKIP_MIC_ERROR_DROP_COUNT,
-	RX_PDMA_SCATTER_DATA_COUNT,
-	RX_PDMA_SCATTER_INDICATION_COUNT,
 	RX_STATISTIC_COUNTER_NUM
 };
 
@@ -612,10 +597,7 @@ enum ENUM_MAC_RX_PKT_TYPE {
 	RX_PKT_TYPE_TM_REPORT,
 	RX_PKT_TYPE_MSDU_REPORT = 6,
 	RX_PKT_TYPE_SW_DEFINED = 7,
-	RX_PKT_TYPE_RX_REPORT = 11,
-#if (CFG_SUPPORT_ICS == 1)
-	RX_PKT_TYPE_ICS = 12
-#endif /* CFG_SUPPORT_ICS */
+	RX_PKT_TYPE_RX_REPORT = 11
 };
 
 enum ENUM_MAC_RX_GROUP_VLD {
@@ -702,23 +684,6 @@ enum {
  *                            P U B L I C   D A T A
  *******************************************************************************
  */
-#if (CFG_SUPPORT_ICS == 1)
-struct ICS_BIN_LOG_HDR {
-	uint32_t u4MagicNum;
-	uint32_t u4Timestamp;
-	uint16_t u2MsgID;
-	uint16_t u2Length;
-};
-
-struct ICS_AGG_HEADER {
-	uint16_t rxByteCount;
-	uint16_t frameCount:5;
-	uint16_t reserved1:6;
-	uint16_t pktType:5;
-	uint16_t reserved2;
-	uint16_t pseFid;
-};
-#endif /* CFG_SUPPORT_ICS */
 
 /*! A data structure which is identical with MAC RX DMA Descriptor */
 struct HW_MAC_RX_DESC {
@@ -875,18 +840,11 @@ struct HW_MAC_MSDU_REPORT {
 	/* DW 1 */
 	union {
 		struct {
-			uint32_t         u4TxdCount:8;
-			uint32_t         u4Rsv1:8;
-			uint32_t         u4Ver:3;
-			uint32_t         u4Rsv2:13;
+	uint32_t         u4TxdCount:8;
+	uint32_t         u4Rsv1:8;
+	uint32_t         u4Ver:3;
+	uint32_t         u4Rsv2:13;
 		} field;
-		struct {
-			uint32_t         u4TxdCount:8;
-			uint32_t         u4Rsv1:8;
-			uint32_t         u4Ver:3;
-			uint32_t         u4Rsv2:1;
-			uint32_t         u4PseFid:12;
-		} field_v3;
 
 		uint32_t word;
 	} DW1;
@@ -925,7 +883,7 @@ struct SW_RFB {
 	void *prRxStatus;
 	struct HW_MAC_RX_STS_GROUP_1 *prRxStatusGroup1;
 	struct HW_MAC_RX_STS_GROUP_2 *prRxStatusGroup2;
-	struct HW_MAC_RX_STS_GROUP_3 *prRxStatusGroup3;
+	void *prRxStatusGroup3;
 	struct HW_MAC_RX_STS_GROUP_4 *prRxStatusGroup4;
 #if (CFG_SUPPORT_CONNAC2X == 1)
 	struct HW_MAC_RX_STS_GROUP_5 *prRxStatusGroup5;
@@ -989,9 +947,6 @@ struct SW_RFB {
 	/*QUE_T rAmsduQue;*/
 #endif
 	uint64_t rIntTime;
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	struct IEEE80211_RADIOTAP_INFO *prRadiotapInfo;
-#endif
 };
 
 #if CFG_TCP_IP_CHKSUM_OFFLOAD
@@ -1045,6 +1000,10 @@ struct RX_CTRL {
 	uint32_t u4RxPktsDumpTypeMask;
 #endif
 
+#if CFG_SUPPORT_SNIFFER
+	uint32_t u4AmpduRefNum;
+#endif
+
 	/* Store SysTime of Last Rx */
 	uint32_t u4LastRxTime[MAX_BSSID_NUM];
 };
@@ -1087,8 +1046,6 @@ struct RX_DESC_OPS_T {
 		void *prRxStatus);
 	uint8_t (*nic_rxd_get_ofld)(
 		void *prRxStatus);
-	uint8_t (*nic_rxd_get_HdrTrans)(
-		void *prRxStatus);
 	void (*nic_rxd_fill_rfb)(
 		struct ADAPTER *prAdapter,
 		struct SW_RFB *prSwRfb);
@@ -1100,11 +1057,6 @@ struct RX_DESC_OPS_T {
 		struct ADAPTER *prAdapter,
 		struct SW_RFB *prSwRfb);
 #endif /* CFG_SUPPORT_WAKEUP_REASON_DEBUG */
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	uint8_t (*nic_rxd_fill_radiotap)(
-		struct ADAPTER *prAdapter,
-		struct SW_RFB *prSwRfb);
-#endif
 };
 
 struct ACTION_FRAME_SIZE_MAP {
@@ -1315,11 +1267,12 @@ struct ACTION_FRAME_SIZE_MAP {
 #define HAL_RX_STATUS_IS_NULL(_prHwMacRxDesc) \
 	(((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_NULL)?TRUE:FALSE)
 #define HAL_RX_STATUS_IS_DATA(_prHwMacRxDesc) \
-	(!((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_NON_DATA))
+	(((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_DATA)?FALSE:TRUE)
 #define HAL_RX_STATUS_IS_AMPDU_SUB_FRAME(_prHwMacRxDesc)	\
-	(!((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_NON_AMPDU_SUB_FRAME))
+	(((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_AMPDU_SUB_FRAME) \
+	? FALSE : TRUE)
 #define HAL_RX_STATUS_IS_AMPDU_FORMAT(_prHwMacRxDesc)	\
-	(!((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_NON_AMPDU_FORMAT))
+	(((_prHwMacRxDesc)->u2StatusFlag & RX_STATUS_AMPDU_FORMAT)?FALSE:TRUE)
 
 /* DW 3 */
 #define HAL_RX_STATUS_IS_RV_VALID(_prHwMacRxDesc)	\
@@ -1475,10 +1428,6 @@ struct ACTION_FRAME_SIZE_MAP {
 	(((_u2FrameCtrl & MASK_TO_DS_FROM_DS) == MASK_FC_FROM_DS) ?\
 		TRUE : FALSE)
 
-#define RXM_IS_FROM_DS_TO_DS(_u2FrameCtrl) \
-	(((_u2FrameCtrl & MASK_TO_DS_FROM_DS) == MASK_TO_DS_FROM_DS) ?\
-		TRUE : FALSE)
-
 /*******************************************************************************
  *                   F U N C T I O N   D E C L A R A T I O N S
  *******************************************************************************
@@ -1525,14 +1474,13 @@ struct SW_RFB *nicRxDefragMPDU(IN struct ADAPTER *prAdapter,
 
 u_int8_t nicRxIsDuplicateFrame(IN OUT struct SW_RFB *prSwRfb);
 
+void nicRxProcessMonitorPacket(IN struct ADAPTER *prAdapter,
+	IN OUT struct SW_RFB *prSwRfb);
 #if CFG_SUPPORT_PERF_IND
 void nicRxPerfIndProcessRXV(IN struct ADAPTER *prAdapter,
 	IN struct SW_RFB *prSwRfb,
 	IN uint8_t ucBssIndex);
 #endif
-
-void nicRxIndicatePackets(IN struct ADAPTER *prAdapter,
-	IN struct SW_RFB *prSwRfbListHead);
 
 void nicRxProcessDataPacket(IN struct ADAPTER *prAdapter,
 	IN OUT struct SW_RFB *prSwRfb);
@@ -1562,11 +1510,6 @@ void nicRxQueryStatistics(IN struct ADAPTER *prAdapter,
 uint32_t nicRxWaitResponse(IN struct ADAPTER *prAdapter,
 	IN uint8_t ucPortIdx, OUT uint8_t *pucRspBuffer,
 	IN uint32_t u4MaxRespBufferLen, OUT uint32_t *pu4Length);
-
-uint32_t nicRxWaitResponseByWaitingInterval(IN struct ADAPTER *prAdapter,
-	IN uint8_t ucPortIdx, OUT uint8_t *pucRspBuffer,
-	IN uint32_t u4MaxRespBufferLen, OUT uint32_t *pu4Length,
-	IN uint32_t u4WaitingInterval, IN uint32_t u4TimeoutValue);
 
 void nicRxEnablePromiscuousMode(IN struct ADAPTER *prAdapter);
 

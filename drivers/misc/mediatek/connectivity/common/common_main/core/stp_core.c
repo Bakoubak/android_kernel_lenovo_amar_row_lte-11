@@ -19,6 +19,7 @@
 #include "stp_sdio.h"
 #include "stp_btif.h"
 #include "wmt_lib.h"
+#include "wmt_step.h"
 #include "wmt_detect.h"
 
 #define PFX                         "[STP] "
@@ -760,8 +761,7 @@ VOID stp_do_tx_timeout(VOID)
 					reason = 45;
 				}
 
-				wmt_lib_cmd_tx_timeout_dump();
-
+				WMT_STEP_COMMAND_TIMEOUT_DO_ACTIONS_FUNC("STP TX no ack timeout");
 				osal_timer_stop(&stp_core_ctx.tx_timer);
 				stp_ctx_unlock(&stp_core_ctx);
 
@@ -781,7 +781,7 @@ VOID stp_do_tx_timeout(VOID)
 	}
 
 	stp_ctx_unlock(&stp_core_ctx);
-	/* polling cpupcr when no ack occurs at first retry */
+	/*polling cpupcr when no ack occurs at first retry */
 	stp_dbg_poll_cpupcr(STP_POLL_CPUPCR_NUM, STP_POLL_CPUPCR_DELAY, 1);
 	STP_WARN_FUNC
 	    ("==============================================================================#\n");
@@ -1028,7 +1028,6 @@ static INT32 wmt_parser_data(PUINT8 buffer, UINT32 length, UINT8 type)
 				osal_buffer_dump(buffer, "coex_packet_print", length, 128);
 #else
 			STP_WARN_FUNC("BT/WIFI & LTE coex in non-LTE projects,drop it...\n");
-			fgRxOk = 0;
 #endif
 		} else {
 			fgRxOk = stp_add_to_rx_queue(buffer + parser_length, packet_length + 4, type);
@@ -3386,9 +3385,8 @@ INT32 mtk_wcn_stp_wakeup_consys(VOID)
 *****************************************************************************/
 INT32 mtk_wcn_stp_dpidle_ctrl(UINT32 en_flag)
 {
-#ifdef CONFIG_MTK_BTIF
 	mtk_wcn_consys_stp_btif_dpidle_ctrl(en_flag);
-#endif
+
 	return 0;
 }
 
@@ -3466,8 +3464,6 @@ INT32 mtk_wcn_stp_wmt_trg_assert(VOID)
 		STP_INFO_FUNC("firmware assert has been triggered\n");
 		return 1;
 	}
-
-	/* trigger assert timer */
 	ret = stp_notify_btm_do_fw_assert(STP_BTM_CORE(stp_core_ctx));
 
 	if (ret) {
@@ -3481,7 +3477,6 @@ INT32 mtk_wcn_stp_wmt_trg_assert(VOID)
 	return ret;
 }
 
-/* run on btmd */
 INT32 mtk_wcn_stp_assert_timeout_handle(VOID)
 {
 	INT32 ret = 0;
@@ -3504,8 +3499,7 @@ INT32 mtk_wcn_stp_assert_timeout_handle(VOID)
 	} else {
 		/*host trigger assert timeout and no coredump packet. To dump EMI data*/
 		STP_INFO_FUNC("host trigger fw assert timeout!\n");
-
-		wmt_lib_assert_timeout_dump();
+		WMT_STEP_COMMAND_TIMEOUT_DO_ACTIONS_FUNC("Trigger assert timeout");
 		if (mtk_wcn_stp_coredump_flag_get() != 0)
 			ret = stp_dbg_start_emi_dump();
 		else
@@ -3514,15 +3508,13 @@ INT32 mtk_wcn_stp_assert_timeout_handle(VOID)
 	return ret;
 }
 
-/* run on btmd */
 INT32 mtk_wcn_stp_coredump_timeout_handle(VOID)
 {
 	/* dump btif data */
 	mtk_wcn_consys_stp_btif_logger_ctrl(BTIF_DUMP_BTIF_REG);
 	mtk_wcn_consys_stp_btif_logger_ctrl(BTIF_DUMP_LOG);
 
-	wmt_lib_coredump_timeout_dump();
-
+	WMT_STEP_COMMAND_TIMEOUT_DO_ACTIONS_FUNC("Coredump timeout");
 	if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_COMBO)
 		mtk_wcn_stp_ctx_restore();
 	return 0;

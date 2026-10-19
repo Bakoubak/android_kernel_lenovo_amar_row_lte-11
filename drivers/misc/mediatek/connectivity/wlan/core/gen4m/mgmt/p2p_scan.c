@@ -120,18 +120,6 @@ scanP2pProcessBeaconAndProbeResp(IN struct ADAPTER *prAdapter,
 {
 	u_int8_t fgIsBeacon = FALSE;
 	u_int8_t fgIsSkipThisBeacon = FALSE;
-	u_int8_t fgIsP2pNetRegistered = FALSE;
-
-	/* Sanity check for p2p net device state */
-	GLUE_SPIN_LOCK_DECLARATION();
-	GLUE_ACQUIRE_SPIN_LOCK(prAdapter->prGlueInfo, SPIN_LOCK_NET_DEV);
-	if (prAdapter->fgIsP2PRegistered &&
-		prAdapter->rP2PNetRegState == ENUM_NET_REG_STATE_REGISTERED)
-		fgIsP2pNetRegistered = TRUE;
-	GLUE_RELEASE_SPIN_LOCK(prAdapter->prGlueInfo, SPIN_LOCK_NET_DEV);
-
-	if (!fgIsP2pNetRegistered)
-		return;
 
 	/* Indicate network to kernel for P2P interface when:
 	 *  1. This is P2P network
@@ -155,8 +143,7 @@ scanP2pProcessBeaconAndProbeResp(IN struct ADAPTER *prAdapter,
 			prP2pBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter,
 					(uint8_t) u4Idx);
 
-			if (!prP2pBssInfo ||
-				!IS_BSS_ACTIVE(prP2pBssInfo))
+			if (!IS_BSS_ACTIVE(prP2pBssInfo))
 				continue;
 
 			if ((prP2pBssInfo->eNetworkType != NETWORK_TYPE_P2P) ||
@@ -217,7 +204,7 @@ scanP2pProcessBeaconAndProbeResp(IN struct ADAPTER *prAdapter,
 		rChannelInfo.eBand = prBssDesc->eBand;
 		prBssDesc->fgIsP2PReport = TRUE;
 
-		DBGLOG(P2P, TRACE,
+		DBGLOG(P2P, INFO,
 			"indicate [" MACSTR "][%s][%s][ch %d][r %d][t %u]\n",
 			MAC2STR(prWlanBeaconFrame->aucBSSID),
 			fgIsBeacon ? "Beacon" : "Probe Response",
@@ -244,8 +231,6 @@ void scnEventReturnChannel(IN struct ADAPTER *prAdapter,
 	/* send cancel message to firmware domain */
 	rCmdScanCancel.ucSeqNum = ucScnSeqNum;
 	rCmdScanCancel.ucIsExtChannel = (uint8_t) FALSE;
-	rCmdScanCancel.aucReserved[0] = 0;
-	rCmdScanCancel.aucReserved[1] = 0;
 
 	wlanSendSetQueryCmd(prAdapter,
 			    CMD_ID_SCAN_CANCEL,

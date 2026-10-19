@@ -1409,7 +1409,7 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 	pWmtGenConf = wmt_get_gen_conf_pointer();
 	if (wmt_ic_ops_soc.options & OPT_SET_WIFI_EXT_COMPONENT) {
 		/* add WMT_COXE_CONFIG_EXT_COMPONENT_OPCODE command for 2G4 eLNA demand*/
-		if (pWmtGenConf && pWmtGenConf->coex_wmt_ext_component) {
+		if (pWmtGenConf->coex_wmt_ext_component) {
 			WMT_INFO_FUNC("coex_wmt_ext_component:0x%x\n", pWmtGenConf->coex_wmt_ext_component);
 			set_wifi_ext_component_table[0].cmd[5] = pWmtGenConf->coex_wmt_ext_component;
 		}
@@ -1439,20 +1439,18 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 			WMT_ERR_FUNC("get_tdm_req_antsel_num_table fail(%d)\n", iRet);
 	}
 #endif
-	if (pWmtGenConf) {
-		WMT_INFO_FUNC("bt_tssi_from_wifi=%d, bt_tssi_target=%d\n",
+	WMT_INFO_FUNC("bt_tssi_from_wifi=%d, bt_tssi_target=%d\n",
 		      pWmtGenConf->bt_tssi_from_wifi, pWmtGenConf->bt_tssi_target);
-		if (pWmtGenConf->bt_tssi_from_wifi) {
-			if (wmt_ic_ops_soc.options & OPT_BT_TSSI_FROM_WIFI_CONFIG_NEW_OPID)
-				WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[4] = 0x10;
+	if (pWmtGenConf->bt_tssi_from_wifi) {
+		if (wmt_ic_ops_soc.options & OPT_BT_TSSI_FROM_WIFI_CONFIG_NEW_OPID)
+			WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[4] = 0x10;
 
-			WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[5] = pWmtGenConf->bt_tssi_from_wifi;
-			WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[6] = (pWmtGenConf->bt_tssi_target & 0x00FF) >> 0;
-			WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[7] = (pWmtGenConf->bt_tssi_target & 0xFF00) >> 8;
-			iRet = wmt_core_init_script(bt_tssi_from_wifi_table, osal_array_size(bt_tssi_from_wifi_table));
-			if (iRet)
-				WMT_ERR_FUNC("bt_tssi_from_wifi_table fail(%d)\n", iRet);
-		}
+		WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[5] = pWmtGenConf->bt_tssi_from_wifi;
+		WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[6] = (pWmtGenConf->bt_tssi_target & 0x00FF) >> 0;
+		WMT_BT_TSSI_FROM_WIFI_CONFIG_CMD[7] = (pWmtGenConf->bt_tssi_target & 0xFF00) >> 8;
+		iRet = wmt_core_init_script(bt_tssi_from_wifi_table, osal_array_size(bt_tssi_from_wifi_table));
+		if (iRet)
+			WMT_ERR_FUNC("bt_tssi_from_wifi_table fail(%d)\n", iRet);
 	}
 
 	/* init epa before start RF calibration */
@@ -1517,39 +1515,37 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 	}
 
 	if (wmt_ic_ops_soc.options & OPT_COEX_CONFIG_ADJUST) {
-		if (pWmtGenConf) {
-			WMT_INFO_FUNC("coex_config_bt_ctrl:0x%x\n", pWmtGenConf->coex_config_bt_ctrl);
-			coex_config_addjust_table[0].cmd[5] = pWmtGenConf->coex_config_bt_ctrl;
-			WMT_INFO_FUNC("coex_config_bt_ctrl_mode:0x%x\n", pWmtGenConf->coex_config_bt_ctrl_mode);
-			coex_config_addjust_table[0].cmd[6] = pWmtGenConf->coex_config_bt_ctrl_mode;
-			WMT_INFO_FUNC("coex_config_bt_ctrl_rw:0x%x\n", pWmtGenConf->coex_config_bt_ctrl_rw);
-			coex_config_addjust_table[0].cmd[7] = pWmtGenConf->coex_config_bt_ctrl_rw;
+		WMT_INFO_FUNC("coex_config_bt_ctrl:0x%x\n", pWmtGenConf->coex_config_bt_ctrl);
+		coex_config_addjust_table[0].cmd[5] = pWmtGenConf->coex_config_bt_ctrl;
+		WMT_INFO_FUNC("coex_config_bt_ctrl_mode:0x%x\n", pWmtGenConf->coex_config_bt_ctrl_mode);
+		coex_config_addjust_table[0].cmd[6] = pWmtGenConf->coex_config_bt_ctrl_mode;
+		WMT_INFO_FUNC("coex_config_bt_ctrl_rw:0x%x\n", pWmtGenConf->coex_config_bt_ctrl_rw);
+		coex_config_addjust_table[0].cmd[7] = pWmtGenConf->coex_config_bt_ctrl_rw;
 
-			WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio:0x%x\n",
-					pWmtGenConf->coex_config_addjust_opp_time_ratio);
-			coex_config_addjust_table[1].cmd[5] = pWmtGenConf->coex_config_addjust_opp_time_ratio;
-			WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio_bt_slot:0x%x\n",
-					pWmtGenConf->coex_config_addjust_opp_time_ratio_bt_slot);
-			coex_config_addjust_table[1].cmd[6] =
-				pWmtGenConf->coex_config_addjust_opp_time_ratio_bt_slot;
-			WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio_wifi_slot:0x%x\n",
-					pWmtGenConf->coex_config_addjust_opp_time_ratio_wifi_slot);
-			coex_config_addjust_table[1].cmd[7] =
-				pWmtGenConf->coex_config_addjust_opp_time_ratio_wifi_slot;
+		WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio:0x%x\n",
+				pWmtGenConf->coex_config_addjust_opp_time_ratio);
+		coex_config_addjust_table[1].cmd[5] = pWmtGenConf->coex_config_addjust_opp_time_ratio;
+		WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio_bt_slot:0x%x\n",
+				pWmtGenConf->coex_config_addjust_opp_time_ratio_bt_slot);
+		coex_config_addjust_table[1].cmd[6] =
+			pWmtGenConf->coex_config_addjust_opp_time_ratio_bt_slot;
+		WMT_INFO_FUNC("coex_config_addjust_opp_time_ratio_wifi_slot:0x%x\n",
+				pWmtGenConf->coex_config_addjust_opp_time_ratio_wifi_slot);
+		coex_config_addjust_table[1].cmd[7] =
+			pWmtGenConf->coex_config_addjust_opp_time_ratio_wifi_slot;
 
-			WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio:0x%x\n",
-					pWmtGenConf->coex_config_addjust_ble_scan_time_ratio);
-			coex_config_addjust_table[2].cmd[5] =
-				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio;
-			WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio_bt_slot:0x%x\n",
-					pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_bt_slot);
-			coex_config_addjust_table[2].cmd[6] =
-				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_bt_slot;
-			WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio_wifi_slot:0x%x\n",
-					pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_wifi_slot);
-			coex_config_addjust_table[2].cmd[7] =
-				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_wifi_slot;
-		}
+		WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio:0x%x\n",
+				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio);
+		coex_config_addjust_table[2].cmd[5] =
+			pWmtGenConf->coex_config_addjust_ble_scan_time_ratio;
+		WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio_bt_slot:0x%x\n",
+				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_bt_slot);
+		coex_config_addjust_table[2].cmd[6] =
+			pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_bt_slot;
+		WMT_INFO_FUNC("coex_config_addjust_ble_scan_time_ratio_wifi_slot:0x%x\n",
+				pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_wifi_slot);
+		coex_config_addjust_table[2].cmd[7] =
+			pWmtGenConf->coex_config_addjust_ble_scan_time_ratio_wifi_slot;
 
 		/* COEX flag is different in these project. */
 		if (wmt_ic_ops_soc.options & OPT_COEX_CONFIG_ADJUST_NEW_FLAG) {
@@ -2106,7 +2102,7 @@ static INT32 wmt_stp_wifi_lte_coex(VOID)
 	pWmtGenConf = (P_WMT_GEN_CONF) addr;
 
 	/*Check if WMT.cfg exists */
-	if (pWmtGenConf == NULL || pWmtGenConf->cfgExist == 0) {
+	if (pWmtGenConf->cfgExist == 0) {
 		WMT_INFO_FUNC("cfgExist == 0, skip config chip\n");
 		/*if WMT.cfg not existed, still return success and adopt the default value */
 		return 0;
@@ -3298,14 +3294,14 @@ static INT32 mtk_wcn_soc_patch_dwn(UINT32 index)
 		iRet = mtk_wcn_soc_normal_patch_dwn(pPatchBuf, patchSize, addressByte);
 
 	/* Set FW patch buildtime into EMI for debugging */
-	if (emiInfo->emi_patch_mcu_buildtime_offset) {
-		patchBuildTimeAddr = ioremap(emiInfo->emi_ap_phy_addr +
+	if (emiInfo->emi_ram_mcu_buildtime_offset) {
+		patchBuildTimeAddr = ioremap_nocache(emiInfo->emi_ap_phy_addr +
 				emiInfo->emi_patch_mcu_buildtime_offset, PATCH_BUILD_TIME_SIZE);
 		if (patchBuildTimeAddr) {
 			osal_memcpy_toio(patchBuildTimeAddr, cDataTime, PATCH_BUILD_TIME_SIZE);
 			iounmap(patchBuildTimeAddr);
 		} else
-			WMT_ERR_FUNC("ioremap fail\n");
+			WMT_ERR_FUNC("ioremap_nocache fail\n");
 	}
 done:
 	if (patchHdr != NULL) {
@@ -3622,14 +3618,14 @@ INT32 mtk_wcn_soc_rom_patch_dwn(UINT32 ip_ver, UINT32 fw_ver)
 					(*mtk_wcn_wlan_emi_mpu_set_protection)(false);
 			}
 
-			patchAddr = ioremap(emiInfo->emi_ap_phy_addr + patchEmiOffset, patchSize);
+			patchAddr = ioremap_nocache(emiInfo->emi_ap_phy_addr + patchEmiOffset, patchSize);
 			WMT_INFO_FUNC("physAddr=0x%x, size=%d virAddr=0x%p\n",
 				emiInfo->emi_ap_phy_addr + patchEmiOffset, patchSize, patchAddr);
 			if (patchAddr) {
 				osal_memcpy_toio(patchAddr, pPatchBuf, patchSize);
 				iounmap(patchAddr);
 			} else
-				WMT_ERR_FUNC("ioremap fail\n");
+				WMT_ERR_FUNC("ioremap_nocache fail\n");
 
 			if (type == WMTDRV_TYPE_BT)
 				patchBuildTimeOffset = emiInfo->emi_ram_bt_buildtime_offset;
@@ -3639,14 +3635,14 @@ INT32 mtk_wcn_soc_rom_patch_dwn(UINT32 ip_ver, UINT32 fw_ver)
 				patchBuildTimeOffset = emiInfo->emi_ram_mcu_buildtime_offset;
 			/* Set ROM patch buildtime into EMI for debugging */
 			if (patchBuildTimeOffset) {
-				patchBuildTimeAddr = ioremap(emiInfo->emi_ap_phy_addr +
+				patchBuildTimeAddr = ioremap_nocache(emiInfo->emi_ap_phy_addr +
 						patchBuildTimeOffset, PATCH_BUILD_TIME_SIZE);
 				if (patchBuildTimeAddr) {
 					osal_memcpy_toio(patchBuildTimeAddr, cDataTime,
 							PATCH_BUILD_TIME_SIZE);
 					iounmap(patchBuildTimeAddr);
 				} else
-					WMT_ERR_FUNC("ioremap fail\n");
+					WMT_ERR_FUNC("ioremap_nocache fail\n");
 			}
 
 			if (type == WMTDRV_TYPE_WIFI) {
@@ -3700,14 +3696,14 @@ VOID mtk_wcn_soc_restore_wifi_cal_result(VOID)
 	WMT_STEP_DO_ACTIONS_FUNC(STEP_TRIGGER_POINT_BEFORE_RESTORE_CAL_RESULT);
 	/* Write Wi-Fi data to EMI */
 	if (gWiFiCalAddrOffset + gWiFiCalSize < emiInfo->emi_size) {
-		wifiCalAddr = ioremap(emiInfo->emi_ap_phy_addr + gWiFiCalAddrOffset,
+		wifiCalAddr = ioremap_nocache(emiInfo->emi_ap_phy_addr + gWiFiCalAddrOffset,
 				gWiFiCalSize);
 		if (wifiCalAddr) {
 			osal_memcpy_toio(wifiCalAddr, gWiFiCalResult, gWiFiCalSize);
 			iounmap(wifiCalAddr);
 			WMT_STEP_DO_ACTIONS_FUNC(STEP_TRIGGER_POINT_AFTER_RESTORE_CAL_RESULT);
 		} else {
-			WMT_ERR_FUNC("ioremap fail\n");
+			WMT_ERR_FUNC("ioremap_nocache fail\n");
 		}
 	}
 	if (mtk_wcn_wlan_emi_mpu_set_protection)
@@ -3917,7 +3913,7 @@ static INT32 mtk_wcn_soc_calibration_backup(void)
 	WMT_STEP_DO_ACTIONS_FUNC(
 		STEP_TRIGGER_POINT_POWER_ON_AFTER_BT_WIFI_CALIBRATION);
 	gWiFiCalAddrOffset = wifiOffset;
-	virWiFiAddrBase = ioremap(
+	virWiFiAddrBase = ioremap_nocache(
 				emiInfo->emi_ap_phy_addr + gWiFiCalAddrOffset,
 				gWiFiCalSize);
 	if (virWiFiAddrBase) {

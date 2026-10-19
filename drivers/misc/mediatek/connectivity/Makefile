@@ -19,8 +19,8 @@ ifneq ($(KERNELRELEASE),)
     subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include
     subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/clkbuf/src
     subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/clkbuf_v1/$(MTK_PLATFORM)
-    subdir-ccflags-y += -Werror -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
-    subdir-ccflags-y += -Werror -I$(srctree)/drivers/misc/mediatek/include/mt-plat
+    subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
+    subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
     subdir-ccflags-y += -I$(srctree)/drivers/mmc/core
     subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/eccci/$(MTK_PLATFORM)
     subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/eccci/
@@ -38,67 +38,43 @@ ifneq ($(KERNELRELEASE),)
         ccflags-y += -D CFG_CONNADP_BUILD_IN
     endif
 
-    # for gen4m options
-    export CONFIG_MTK_COMBO_WIFI_HIF=axi
-    export MTK_COMBO_CHIP=CONNAC
-    export BT_PLATFORM=connac1x
-    export WLAN_CHIP_ID=6765
-    export MTK_ANDROID_WMT=y
-    export MTK_ANDROID_EMI=y
-    export WIFI_IP_SET=1
-    export WIFI_ECO_VER=1
-    export MTK_WLAN_SERVICE=yes
-
     # Do build-in for Makefile checking
     # export CONFIG_WLAN_DRV_BUILD_IN=y
 
     ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
-        PATH_TO_WMT_DRV      = vendor/mediatek/kernel_modules/connectivity/common
-        PATH_TO_WLAN_CHR_DRV = vendor/mediatek/kernel_modules/connectivity/wlan/adaptor
-        PATH_TO_WLAN_DRV     = vendor/mediatek/kernel_modules/connectivity/wlan/core/gen4m
+        MTK_PLATFORM_ID := $(patsubst CONSYS_%,%,$(subst ",,$(CONFIG_MTK_COMBO_CHIP)))
 
-        ABS_PATH_TO_WMT_DRV      = $(srctree)/../$(PATH_TO_WMT_DRV)
-        ABS_PATH_TO_WLAN_CHR_DRV = $(srctree)/../$(PATH_TO_WLAN_CHR_DRV)
-        ABS_PATH_TO_WLAN_DRV     = $(srctree)/../$(PATH_TO_WLAN_DRV)
+        # for gen4m options
+        export CONFIG_MTK_COMBO_WIFI_HIF=axi
+        export MTK_COMBO_CHIP=CONNAC
+        export WLAN_CHIP_ID=6765
+        export MTK_ANDROID_WMT=y
+        # export MTK_ANDROID_EMI=y
+        export WIFI_IP_SET=1
+        export WIFI_ECO_VER=1
+        export CFG_FM_CHIP_ID=6765
+        export CFG_FM_CHIP=mt6631
 
-        # check wlan driver folder
-        ifeq (,$(wildcard $(ABS_PATH_TO_WMT_DRV)))
-            $(error $(ABS_PATH_TO_WMT_DRV) is not existed)
-        endif
-        ifeq (,$(wildcard $(ABS_PATH_TO_WLAN_CHR_DRV)))
-            $(error $(ABS_PATH_TO_WLAN_CHR_DRV) is not existed)
-        endif
-        ifeq (,$(wildcard $(ABS_PATH_TO_WLAN_DRV)))
-            $(error $(ABS_PATH_TO_WLAN_DRV) is not existed)
-        endif
-
-        $(warning symbolic link to $(PATH_TO_WMT_DRV))
-        $(warning symbolic link to $(PATH_TO_WLAN_CHR_DRV))
-        $(warning symbolic link to $(PATH_TO_WLAN_DRV))
-
-        $(shell unlink $(srctree)/$(src)/wmt_drv)
-        $(shell unlink $(srctree)/$(src)/wmt_chrdev_wifi)
-        $(shell unlink $(srctree)/$(src)/wlan_drv_gen4m)
-
-        $(shell ln -s $(ABS_PATH_TO_WMT_DRV)      $(srctree)/$(src)/wmt_drv)
-        $(shell ln -s $(ABS_PATH_TO_WLAN_CHR_DRV) $(srctree)/$(src)/wmt_chrdev_wifi)
-        $(shell ln -s $(ABS_PATH_TO_WLAN_DRV)     $(srctree)/$(src)/wlan_drv_gen4m)
+        # Remove debugging
+        export TARGET_BUILD_VARIANT=user
 
         # Do build-in for xxx.c checking
         subdir-ccflags-y += -D MTK_WCN_REMOVE_KERNEL_MODULE
         subdir-ccflags-y += -D MTK_WCN_BUILT_IN_DRIVER
-        obj-y += wmt_drv/
-        obj-y += wmt_chrdev_wifi/
-        obj-y += wlan_drv_gen4m/
+
+        obj-y += common/
+        obj-y += wlan/adaptor/
+        obj-y += wlan/core/gen4m/
     endif
 
-    obj-$(CONFIG_MTK_COMBO) += common/
-    obj-$(CONFIG_MTK_COMBO_WIFI) += wlan/adaptor/
-    obj-$(CONFIG_MTK_COMBO_CHIP_CONSYS_6765) += wlan/core/gen4m/
-    obj-$(CONFIG_MTK_BTIF) += bt/mt66xx/wmt/
-    obj-$(CONFIG_MTK_COMBO_GPS) += gps/
-    obj-$(CONFIG_MTK_FMRADIO) += fmradio/
-    obj-$(CONFIG_MTK_CONNFEM) += connfem/
+# Bluetooth
+obj-$(CONFIG_MTK_COMBO_BT) += bt/mt66xx/legacy/
+
+# FMRadio
+obj-$(CONFIG_MTK_FMRADIO) += fmradio/
+
+# GPS
+obj-$(CONFIG_MTK_COMBO_GPS) += gps/
 
 # Otherwise we were called directly from the command line;
 # invoke the kernel build system.

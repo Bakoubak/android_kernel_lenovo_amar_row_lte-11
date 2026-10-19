@@ -133,8 +133,7 @@ extern const uint8_t *apucNetworkType[NETWORK_TYPE_NUM];
 #define IS_BSS_INDEX_VALID(_ucBssIndex)     ((_ucBssIndex) <= P2P_DEV_BSS_INDEX)
 
 #define GET_BSS_INFO_BY_INDEX(_prAdapter, _ucBssIndex) \
-	(IS_BSS_INDEX_VALID(_ucBssIndex) ? \
-		(_prAdapter)->aprBssInfo[(_ucBssIndex)] : NULL)
+	((_prAdapter)->aprBssInfo[(_ucBssIndex)])
 
 #define bssAssignAssocID(_prStaRec)         ((_prStaRec)->ucIndex + 1)
 
@@ -257,10 +256,6 @@ void ibssInitForAdHoc(IN struct ADAPTER *prAdapter,
 
 uint32_t bssUpdateBeaconContent(IN struct ADAPTER
 				*prAdapter, IN uint8_t uBssIndex);
-
-uint32_t bssUpdateBeaconContentEx(IN struct ADAPTER
-				*prAdapter, IN uint8_t uBssIndex,
-				enum ENUM_IE_UPD_METHOD eMethod);
 
 /*----------------------------------------------------------------------------*/
 /* Routines for BSS(AP) only                                                  */

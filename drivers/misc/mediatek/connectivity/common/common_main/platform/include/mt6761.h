@@ -24,13 +24,6 @@
 *                         C O M P I L E R   F L A G S
 ********************************************************************************
 */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-#define COMMON_KERNEL_PMIC_SUPPORT	1
-#define COMMON_KERNEL_CLK_SUPPORT	1
-#else
-#define COMMON_KERNEL_PMIC_SUPPORT	0
-#define COMMON_KERNEL_CLK_SUPPORT	0
-#endif
 
 #define CONSYS_BT_WIFI_SHARE_V33	0
 #define CONSYS_PMIC_CTRL_ENABLE		1
@@ -57,15 +50,8 @@
 #define CONSYS_IF_PINMUX_02_OFFSET	0x000003E0
 #define CONSYS_IF_PINMUX_02_MASK	0x8888888F
 #define CONSYS_IF_PINMUX_02_VALUE	0x11111110
-
-/* A-Die interface pinmux driving base */
-#define CONSYS_IF_PINMUX_DRIVING_BASE	0x10002c00
-#define CONSYS_IF_PINMUX_DRIVING_OFFSET_1	0x0
-#define CONSYS_IF_PINMUX_DRIVING_MASK_1		0xc703ffff
-#define CONSYS_IF_PINMUX_DRIVING_VALUE_1	0x8240000
-#define CONSYS_IF_PINMUX_DRIVING_OFFSET_2	0x10
-#define CONSYS_IF_PINMUX_DRIVING_MASK_2		0xfffffff8
-#define CONSYS_IF_PINMUX_DRIVING_VALUE_2	0x1
+#define CONSYS_IF_DRV_PINMUX_REG_BASE	0x10420000
+#define CONSYS_IF_DRV_PINMUX_MASK	0xF8FFFFFF
 
 /*TOPCKGEN_BASE*/
 #define CONSYS_AP2CONN_OSC_EN_OFFSET	0x00000f00
@@ -179,9 +165,7 @@
 #define CONSYS_WD_SYS_RST_BIT		(0x1 << 9)
 
 /*CONSYS_MCU_CFG_ACR_REG*/
-#define CONSYS_MCU_CFG_ACR_MBIST_OFFSET	(0x10)
-#define CONSYS_MCU_CFG_ACR_MBIST_MASK	(0xfffffffc)
-#define CONSYS_MCU_CFG_ACR_MBIST_VAL	(0x3)
+#define CONSYS_MCU_CFG_ACR_MBIST_BIT	(0x1 << 0 | 0x1 << 1)
 
 /*control app2cnn_osc_en*/
 #define CONSYS_AP2CONN_OSC_EN_BIT	(0x1 << 10)
@@ -268,20 +252,6 @@ extern struct bt_wifi_v33_status gBtWifiV33;
 *                  F U N C T I O N   D E C L A R A T I O N S
 ********************************************************************************
 */
-extern INT32 dump_conn_debug_dump_mt6761(const char *trg_str);
-extern INT32 dump_conn_mcu_debug_flag_mt6761(const char *trg_str);
-extern INT32 dump_conn_mcu_apb0_bus_mt6761(const char *trg_str);
-extern INT32 dump_conn_mcu_apb1_bus_mt6761(const char *trg_str);
-extern INT32 dump_conn_bus_timeout_mt6761(const char *trg_str);
-extern INT32 dump_conn_mcu_pc_log_mt6761(const char *trg_str);
-extern INT32 dump_conn_cfg_on_debug_signal_mt6761(const char *trg_str);
-extern INT32 dump_conn_cfg_on_register_mt6761(const char *trg_str);
-extern INT32 dump_conn_cmdbt_debug_signal_mt6761(const char *trg_str);
-extern INT32 dump_conn_emi_detect_mt6761(const char *trg_str);
-extern INT32 dump_conn_slp_protect_debug_mt6761(const char *trg_str);
-extern INT32 dump_conn_spm_r13_mt6761(const char *trg_str);
-extern INT32 dump_conn_bus_timeout_debug_mt6761(const char *trg_str);
-extern INT32 dump_conn_ILM_corrupt_issue_debug_mt6761(const char *trg_str);
 
 /*******************************************************************************
 *                              F U N C T I O N S

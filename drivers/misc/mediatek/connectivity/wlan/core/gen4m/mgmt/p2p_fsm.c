@@ -126,8 +126,10 @@ static u_int8_t p2pFsmUseRoleIf(IN struct ADAPTER *prAdapter,
 			fgUseRoleInterface = TRUE;
 			if (prBssInfo->eIftype != IFTYPE_P2P_CLIENT &&
 				prBssInfo->eIftype != IFTYPE_P2P_GO &&
-				!prAdapter->rWifiVar.prP2PConnSettings
-				[prBssInfo->u4PrivateData]->fgIsApMode) {
+				!p2pFuncIsAPMode(
+				prAdapter->rWifiVar
+				.prP2PConnSettings
+				[prBssInfo->u4PrivateData])) {
 				DBGLOG(P2P, TRACE,
 					"force use dev interface.\n");
 				fgUseRoleInterface = FALSE;
@@ -206,8 +208,7 @@ void p2pFsmRunEventChGrant(IN struct ADAPTER *prAdapter,
 		prP2pBssInfo =
 			GET_BSS_INFO_BY_INDEX(prAdapter,
 				prMsgChGrant->ucBssIndex);
-		if (!prP2pBssInfo)
-			break;
+
 		prAdapter->prP2pInfo->eConnState = P2P_CNN_NORMAL;
 		prAdapter->prP2pInfo->ucExtendChanFlag = 0;
 
@@ -358,16 +359,6 @@ void p2pFsmRunEventWfdSettingUpdate(IN struct ADAPTER *prAdapter,
 				/* Reset linkscore */
 				prWfdCfgSettings->u4LinkScore = 0;
 			}
-
-			/* Force RTS to protect WFD packet */
-			wlanSetForceRTS(prAdapter,
-				prWfdCfgSettings->ucWfdEnable);
-
-			/* Update WMM to add BA immediately */
-			if (prWfdCfgSettings->ucWfdEnable == 1) {
-				nicQmUpdateWmmParms(prAdapter,
-					prP2pRoleFsmInfo->ucBssIndex);
-			}
 		}
 #endif
 
@@ -404,8 +395,7 @@ void p2pFsmRunEventScanDone(IN struct ADAPTER *prAdapter,
 	prP2pBssInfo =
 		GET_BSS_INFO_BY_INDEX(prAdapter, prScanDoneMsg->ucBssIndex);
 
-	if (!prP2pBssInfo ||
-		prAdapter->fgIsP2PRegistered == FALSE) {
+	if (prAdapter->fgIsP2PRegistered == FALSE) {
 		DBGLOG(P2P, TRACE,
 			"P2P BSS Info is removed, break p2pFsmRunEventScanDone\n");
 

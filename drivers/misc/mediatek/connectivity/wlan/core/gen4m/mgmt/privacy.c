@@ -130,11 +130,6 @@ void secInit(IN struct ADAPTER *prAdapter, IN uint8_t ucBssIndex)
 
 	prConnSettings = aisGetConnSettings(prAdapter, ucBssIndex);
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
-	if (prBssInfo == NULL) {
-		DBGLOG(RSN, ERROR, "prBssInfo is %d NULL\n",
-			ucBssIndex);
-		return;
-	}
 	prAisSpecBssInfo =
 		aisGetAisSpecBssInfo(prAdapter, ucBssIndex);
 	prMib = aisGetMib(prAdapter, ucBssIndex);
@@ -190,10 +185,6 @@ void secInit(IN struct ADAPTER *prAdapter, IN uint8_t ucBssIndex)
 	prMib->
 	    dot11RSNAConfigPairwiseCiphersTable[9].dot11RSNAConfigPairwiseCipher
 	    = RSN_CIPHER_SUITE_GCMP_256;
-	prMib->
-	    dot11RSNAConfigPairwiseCiphersTable[10]
-						.dot11RSNAConfigPairwiseCipher
-	    = RSN_CIPHER_SUITE_GCMP;
 
 	for (i = 0; i < MAX_NUM_SUPPORTED_CIPHER_SUITES; i++)
 		prMib->dot11RSNAConfigPairwiseCiphersTable
@@ -503,14 +494,7 @@ void secSetCipherSuite(IN struct ADAPTER *prAdapter,
 				prEntry->dot11RSNAConfigPairwiseCipherEnabled =
 					FALSE;
 			break;
-		case RSN_CIPHER_SUITE_GCMP:
-			if (u4CipherSuitesFlags & CIPHER_FLAG_GCMP128)
-				prEntry->dot11RSNAConfigPairwiseCipherEnabled =
-					TRUE;
-			else
-				prEntry->dot11RSNAConfigPairwiseCipherEnabled =
-					FALSE;
-			break;
+
 		case WPA_CIPHER_SUITE_WEP40:
 		case RSN_CIPHER_SUITE_WEP40:
 			if (u4CipherSuitesFlags & CIPHER_FLAG_WEP40)
@@ -586,10 +570,6 @@ void secSetCipherSuite(IN struct ADAPTER *prAdapter,
 		RSN_CIPHER_SUITE_GCMP_256, &i, ucBssIndex))
 		prMib->dot11RSNAConfigGroupCipher =
 		    RSN_CIPHER_SUITE_GCMP_256;
-	else if (rsnSearchSupportedCipher(prAdapter,
-		RSN_CIPHER_SUITE_GCMP, &i, ucBssIndex))
-		prMib->dot11RSNAConfigGroupCipher =
-		    RSN_CIPHER_SUITE_GCMP;
 	else
 		prMib->dot11RSNAConfigGroupCipher = WPA_CIPHER_SUITE_NONE;
 
@@ -666,10 +646,6 @@ u_int8_t secIsProtectedFrame(IN struct ADAPTER *prAdapter,
 			     IN struct MSDU_INFO *prMsdu,
 			     IN struct STA_RECORD *prStaRec)
 {
-#if CFG_SUPPORT_NAN
-	struct BSS_INFO *prBssInfo;
-#endif
-
 #if CFG_SUPPORT_802_11W
 	if (rsnCheckBipKeyInstalled(prAdapter, prStaRec) &&
 	    (secIsRobustActionFrame(prAdapter, prMsdu->prPacket)
@@ -679,20 +655,6 @@ u_int8_t secIsProtectedFrame(IN struct ADAPTER *prAdapter,
 #endif
 	if (prMsdu->ucPacketType == TX_PACKET_TYPE_MGMT)
 		return FALSE;
-#if CFG_SUPPORT_NAN
-	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter,
-		prMsdu->ucBssIndex);
-	if (prBssInfo == NULL) {
-		DBGLOG(NAN, ERROR, "prBssInfo is null\n");
-		return FALSE;
-	}
-	if (prBssInfo->eNetworkType == NETWORK_TYPE_NAN) {
-		if (prStaRec && (prStaRec->fgTransmitKeyExist == TRUE))
-			return TRUE;
-		else
-			return FALSE;
-	}
-#endif
 
 	return secIsProtectedBss(prAdapter,
 				 GET_BSS_INFO_BY_INDEX(prAdapter,
@@ -832,17 +794,12 @@ u_int8_t secPrivacySeekForEntry(
 	}
 
 	prP2pBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prSta->ucBssIndex);
-	if (prP2pBssInfo == NULL) {
-		DBGLOG(RSN, ERROR, "prP2pBssInfo is &d null\n",
-			prSta->ucBssIndex);
-		return FALSE;
-	}
 	ucRoleIdx = prP2pBssInfo->u4PrivateData;
 
 	prWtbl = prAdapter->rWifiVar.arWtbl;
 
-	/* reserve wtbl IDX 0~3 for BIP*/
-	ucStartIDX = 4;
+	/* reserve wtbl IDX 0, 1 for BIP*/
+	ucStartIDX = 2;
 	ucMaxIDX = prAdapter->ucTxDefaultWlanIndex - 1;
 
 	for (i = ucStartIDX; i <= ucMaxIDX; i++) {
@@ -1056,6 +1013,20 @@ void secRemoveBssBcEntry(IN struct ADAPTER *prAdapter,
 		 */
 		prBssInfo->ucBMCWlanIndex = WTBL_RESERVED_ENTRY;
 		secPrivacyFreeForEntry(prAdapter, prBssInfo->ucBMCWlanIndex);
+
+		for (i = 0; i < MAX_KEY_NUM; i++) {
+			if (prBssInfo->ucBMCWlanIndexSUsed[i])
+				secPrivacyFreeForEntry(prAdapter,
+					prBssInfo->ucBMCWlanIndexS[i]);
+
+		}
+		for (i = 0; i < MAX_KEY_NUM; i++) {
+			if (prBssInfo->wepkeyUsed[i])
+				secPrivacyFreeForEntry(prAdapter,
+					       prBssInfo->wepkeyWlanIdx);
+		}
+		prBssInfo->fgBcDefaultKeyExist = FALSE;
+		prBssInfo->ucBcDefaultKeyIdx = 0xff;
 	}
 
 }
@@ -1092,12 +1063,6 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBSSInfo =
 	    GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
 
-	if (prBSSInfo == NULL) {
-		DBGLOG(RSN, ERROR, "prBSSInfo is %d null\n",
-			ucBssIndex);
-		return WTBL_ALLOC_FAIL;
-	}
-
 	prWtbl = prAdapter->rWifiVar.arWtbl;
 
 	if (ucAlg == CIPHER_SUITE_WPI ||	/* CIPHER_SUITE_GCM_WPI || */
@@ -1112,8 +1077,12 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 	if (prBSSInfo->eCurrentOPMode == OP_MODE_ACCESS_POINT)
 		fgCheckKeyId = FALSE;
 
-	/* reserve wtbl IDX 0~3 for BIP*/
-	ucStartIDX = 4;
+	DBGLOG_LIMITED(INIT, INFO, "OpMode:%d, NetworkType:%d, CheckKeyId:%d\n",
+		prBSSInfo->eCurrentOPMode, prBSSInfo->eNetworkType,
+		fgCheckKeyId);
+
+	/* reserve wtbl IDX 0, 1 for BIP*/
+	ucStartIDX = 2;
 	ucMaxIDX = prAdapter->ucTxDefaultWlanIndex - 1;
 
 	if (ucAlg == CIPHER_SUITE_BIP) {
@@ -1127,8 +1096,8 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 				if (!fgCheckKeyId) {
 					ucEntry = i;
 					DBGLOG(RSN, TRACE,
-						"[Wlan index]: Reuse entry #%d for open/wep/wpi\n",
-						i);
+					    "[Wlan index]: Reuse entry #%d for open/wep/wpi\n",
+					    i);
 					break;
 				}
 
@@ -1137,8 +1106,8 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 						|| prWtbl[i].ucKeyId == 0xFF)) {
 					ucEntry = i;
 					DBGLOG(RSN, TRACE,
-						"[Wlan index]: Reuse entry #%d\n",
-						i);
+					    "[Wlan index]: Reuse entry #%d\n",
+					    i);
 					break;
 				}
 			}
@@ -1149,8 +1118,8 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 				if (prWtbl[i].ucUsed == FALSE) {
 					ucEntry = i;
 					DBGLOG(RSN, TRACE,
-					       "[Wlan index]: Assign entry #%d\n",
-						i);
+					    "[Wlan index]: Assign entry #%d\n",
+					    i);
 					break;
 				}
 			}
@@ -1169,11 +1138,8 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 		DBGLOG_LIMITED(RSN, INFO,
 		       "[Wlan index] BSS#%d keyid#%d P=%d use WlanIndex#%d STAIdx=%d "
 		       MACSTR
-		       " (OpMode:%d, NetworkType:%d, CheckKeyId:%d)\n",
-		       ucBssIndex, ucKeyId, prWtbl[ucEntry].ucPairwise,
-		       ucEntry, ucStaIdx, MAC2STR(pucAddr),
-		       prBSSInfo->eCurrentOPMode, prBSSInfo->eNetworkType,
-		       fgCheckKeyId);
+		       "\n", ucBssIndex, ucKeyId, prWtbl[ucEntry].ucPairwise,
+		       ucEntry, ucStaIdx, MAC2STR(pucAddr));
 
 		/* DBG */
 		secCheckWTBLAssign(prAdapter);
@@ -1181,9 +1147,7 @@ secPrivacySeekForBcEntry(IN struct ADAPTER *prAdapter,
 	} else {
 		secCheckWTBLAssign(prAdapter);
 		DBGLOG(RSN, ERROR,
-			"[Wlan index] No more wlan entry available!!!! (OpMode:%d, NetworkType:%d, CheckKeyId:%d)\n",
-			prBSSInfo->eCurrentOPMode, prBSSInfo->eNetworkType,
-			fgCheckKeyId);
+			"[Wlan index] No more wlan entry available!!!!\n");
 	}
 
 	return ucEntry;

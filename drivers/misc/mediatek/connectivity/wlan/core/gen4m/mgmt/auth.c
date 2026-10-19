@@ -315,12 +315,6 @@ uint32_t authSendAuthFrame(IN struct ADAPTER *prAdapter,
 	 * in MSDU_INfO_T.
 	 */
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex)
-	if (prBssInfo == NULL) {
-		DBGLOG(SAA, ERROR, "prBssInfo is %d NULL\n",
-			prStaRec->ucBssIndex);
-		cnmMgtPktFree(prAdapter, prMsduInfo);
-		return WLAN_STATUS_FAILURE;
-	}
 
 	    /* Compose Header and some Fixed Fields */
 	    authComposeAuthFrameHeaderAndFF((uint8_t *)
@@ -386,7 +380,7 @@ authSendAuthFrame(IN struct ADAPTER *prAdapter,
 		  IN uint16_t u2TransactionSeqNum, IN uint16_t u2StatusCode)
 {
 	uint8_t *pucReceiveAddr;
-	uint8_t *pucTransmitAddr = NULL;
+	uint8_t *pucTransmitAddr;
 	struct MSDU_INFO *prMsduInfo;
 	struct BSS_INFO *prBssInfo;
 	/*get from input parameter */
@@ -437,11 +431,6 @@ authSendAuthFrame(IN struct ADAPTER *prAdapter,
 		    GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex);
 
 		pucTransmitAddr = prBssInfo->aucOwnMacAddr;
-		if (pucTransmitAddr == NULL) {
-			DBGLOG(SAA, WARN, "pucTransmitAddre is NULL\n");
-			cnmMgtPktFree(prAdapter, prMsduInfo);
-			return WLAN_STATUS_FAILURE;
-		}
 
 		pucReceiveAddr = prStaRec->aucMacAddr;
 
@@ -620,9 +609,7 @@ uint32_t authCheckRxAuthFrameTransSeq(IN struct ADAPTER *prAdapter,
 	}
 
 	prStaRec = cnmGetStaRecByIndex(prAdapter, prSwRfb->ucStaRecIdx);
-	if (prStaRec &&
-		(IS_STA_IN_AIS(prStaRec) ||
-		(IS_STA_IN_P2P(prStaRec) && IS_AP_STA(prStaRec)))) {
+	if (prStaRec && IS_STA_IN_AIS(prStaRec)) {
 		if (prStaRec->eAuthAssocState == SAA_STATE_EXTERNAL_AUTH) {
 			saaFsmRunEventRxAuth(prAdapter, prSwRfb);
 			return WLAN_STATUS_SUCCESS;
@@ -949,7 +936,7 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 		    IN struct SW_RFB *prClassErrSwRfb, IN uint16_t u2ReasonCode,
 		    IN PFN_TX_DONE_HANDLER pfTxDoneHandler)
 {
-	uint8_t *pucReceiveAddr = NULL;
+	uint8_t *pucReceiveAddr;
 	uint8_t *pucTransmitAddr;
 	uint8_t *pucBssid = NULL;
 	struct MSDU_INFO *prMsduInfo;
@@ -996,10 +983,8 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 		       MAC2STR(prWlanMacHeader->aucAddr3),
 		       prWlanMacHeader->u2SeqCtrl);
 		/* Check if corresponding BSS is able to send Deauth */
-		for (i = 0; i < MAX_BSSID_NUM; i++) {
+		for (i = 0; i < prAdapter->ucHwBssIdNum; i++) {
 			prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, i);
-			if (prBssInfo == NULL)
-				continue;
 
 			if (IS_NET_ACTIVE(prAdapter, i) &&
 			    (EQUAL_MAC_ADDR
@@ -1019,12 +1004,10 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 	} else if (prStaRec) {
 		prBssInfo =
 		    GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex);
-		if (prBssInfo) {
-			ucStaRecIdx = prStaRec->ucIndex;
-			ucBssIndex = prBssInfo->ucBssIndex;
+		ucStaRecIdx = prStaRec->ucIndex;
+		ucBssIndex = prBssInfo->ucBssIndex;
 
-			pucReceiveAddr = prStaRec->aucMacAddr;
-		}
+		pucReceiveAddr = prStaRec->aucMacAddr;
 	} else if (prBssInfo) {
 		ucBssIndex = prBssInfo->ucBssIndex;
 		ucStaRecIdx = STA_REC_INDEX_BMCAST;
@@ -1059,24 +1042,22 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 
 				i4NewEntryIndex = i;
 			} else
-			if (pucReceiveAddr) {
-				if (EQUAL_MAC_ADDR
-					(pucReceiveAddr,
-						prDeauthInfo->aucRxAddr)
-						&& (!pfTxDoneHandler)) {
+			if (EQUAL_MAC_ADDR
+				(pucReceiveAddr, prDeauthInfo->aucRxAddr)
+				&& (!pfTxDoneHandler)) {
 
-					return WLAN_STATUS_FAILURE;
-				}
+				return WLAN_STATUS_FAILURE;
 			}
 		}
 
 		/* 4 <3> Update information. */
 		if (i4NewEntryIndex > 0) {
+
 			prDeauthInfo =
 			    &(prAdapter->
 			      rWifiVar.arDeauthInfo[i4NewEntryIndex]);
-			COPY_MAC_ADDR(prDeauthInfo->aucRxAddr,
-				pucReceiveAddr);
+
+			COPY_MAC_ADDR(prDeauthInfo->aucRxAddr, pucReceiveAddr);
 			prDeauthInfo->rLastSendTime = rCurrentTime;
 		} else {
 			/* NOTE(Kevin): for the case of AP mode, we may
@@ -1131,13 +1112,14 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 			     + MAC_TX_RESERVED_FIELD);
 
 			prDeauthFrame->u2FrameCtrl |= MASK_FC_PROTECTED_FRAME;
-
-			/* Set deauth flag except p2p gc scenario*/
-			GET_BSS_INFO_BY_INDEX(prAdapter,
-				prStaRec->ucBssIndex)
-				->encryptedDeauthIsInProcess
-					= TRUE;
-
+			if (GET_BSS_INFO_BY_INDEX(prAdapter,
+				prStaRec->ucBssIndex)->eNetworkType ==
+				(uint8_t) NETWORK_TYPE_AIS) {
+				GET_BSS_INFO_BY_INDEX(prAdapter,
+					prStaRec->ucBssIndex)
+					->encryptedDeauthIsInProcess
+						= TRUE;
+			}
 			DBGLOG(SAA, INFO,
 			       "Reason=%d, DestAddr=" MACSTR
 			       " srcAddr=" MACSTR " BSSID=" MACSTR "\n",
@@ -1167,7 +1149,7 @@ authSendDeauthFrame(IN struct ADAPTER *prAdapter,
 	if (rsnCheckBipKeyInstalled(prAdapter, prStaRec)) {
 		/* 4.3.3.1 send unprotected deauth reason 6/7 */
 		if (prStaRec->rPmfCfg.fgRxDeauthResp != TRUE) {
-			DBGLOG(RSN, TRACE,
+			DBGLOG(RSN, INFO,
 			       "Deauth Set MSDU_OPT_PROTECTED_FRAME\n");
 			nicTxConfigPktOption(prMsduInfo,
 					     MSDU_OPT_PROTECTED_FRAME, TRUE);

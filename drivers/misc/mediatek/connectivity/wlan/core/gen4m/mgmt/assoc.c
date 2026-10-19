@@ -100,7 +100,7 @@ struct APPEND_VAR_IE_ENTRY txAssocReqIETable[] = {
 	{(ELEM_HDR_LEN + ELEM_MAX_LEN_HT_CAP), NULL, rlmReqGenerateHtCapIE}
 	,			/* 45 */
 #if CFG_SUPPORT_802_11R
-	{(ELEM_HDR_LEN + 3), NULL, assocGenerateMDIE}, /* Element ID: 54 */
+	{(ELEM_HDR_LEN + 1), NULL, assocGenerateMDIE}, /* Element ID: 54 */
 	{0, rsnCalculateFTIELen, rsnGenerateFTIE}, /* Element ID: 55 */
 #endif
 #if CFG_SUPPORT_802_11K
@@ -123,20 +123,13 @@ struct APPEND_VAR_IE_ENTRY txAssocReqIETable[] = {
 #if (CFG_SUPPORT_802_11AX == 1)
 	{(0), heRlmCalculateHeCapIELen, heRlmReqGenerateHeCapIE}
 	,			/* 255, EXT 35 */
-#if (CFG_SUPPORT_WIFI_6G == 1)
-	{(ELEM_HDR_LEN + ELEM_MAX_LEN_HE_6G_CAP), NULL,
-	 heRlmReqGenerateHe6gBandCapIE}
-	,			/* 255, EXT 59 */
-#endif
-#endif
-#if (CFG_SUPPORT_802_11BE == 1)
-	{(0), ehtRlmCalculateCapIELen, ehtRlmReqGenerateCapIE}
-	,
 #endif
 #if CFG_SUPPORT_MTK_SYNERGY
 	{(ELEM_HDR_LEN + ELEM_MIN_LEN_MTK_OUI), NULL, rlmGenerateMTKOuiIE}
-				/* 221 */
+	,			/* 221 */
 #endif
+	{(ELEM_HDR_LEN + ELEM_MAX_LEN_WPA), NULL, rsnGenerateWPAIE}
+	/* 221 */
 };
 
 #if CFG_SUPPORT_AAA
@@ -180,17 +173,6 @@ struct APPEND_VAR_IE_ENTRY txAssocRespIETable[] = {
 	,			/* 255, EXT 35 */
 	{0, heRlmCalculateHeOpIELen, heRlmRspGenerateHeOpIE}
 	,			/* 255, EXT 36 */
-#if (CFG_SUPPORT_WIFI_6G == 1)
-	{(ELEM_HDR_LEN + ELEM_MAX_LEN_HE_6G_CAP), NULL,
-	 heRlmReqGenerateHe6gBandCapIE}
-	,			/* 255, EXT 59 */
-#endif
-#endif
-#if CFG_SUPPORT_802_11BE
-	{0, ehtRlmCalculateCapIELen, ehtRlmRspGenerateCapIE}
-	,
-	{0, ehtRlmCalculateOpIELen, ehtRlmRspGenerateOpIE}
-	,
 #endif
 	{(ELEM_HDR_LEN + ELEM_MAX_LEN_WMM_PARAM), NULL, mqmGenerateWmmParamIE}
 	,			/* 221 */
@@ -207,9 +189,7 @@ struct APPEND_VAR_IE_ENTRY txAssocRespIETable[] = {
 	rsnPmfGenerateTimeoutIE}
 	/* 56 */
 #endif
-	,
-	{(ELEM_HDR_LEN + ELEM_MAX_LEN_RSN), NULL, rsnGenerateRSNXIE}
-	/* 244 */
+
 };
 #endif /* CFG_SUPPORT_AAA */
 
@@ -287,11 +267,7 @@ uint16_t assocBuildCapabilityInfo(IN struct ADAPTER *prAdapter,
 		 * In TGn 5.2.22, spectrum management bit should set to 1
 		 * to pass the UCC's check.
 		 */
-		if (prBssInfo && (prBssInfo->eBand == BAND_5G
-#if (CFG_SUPPORT_WIFI_6G == 1)
-			|| prBssInfo->eBand == BAND_6G
-#endif
-		))
+		if (prBssInfo && prBssInfo->eBand == BAND_5G)
 			u2CapInfo |= CAP_INFO_SPEC_MGT;
 #endif
 
@@ -364,14 +340,10 @@ static __KAL_INLINE__ void assocBuildReAssocReqFrameCommonIEs(
 
 	}
 #if CFG_ENABLE_WIFI_DIRECT
-	else if ((prAdapter->fgIsP2PRegistered) &&
-		(IS_STA_IN_P2P(prStaRec))) {
+	else if ((prAdapter->fgIsP2PRegistered) && (IS_STA_IN_P2P(prStaRec)))
 		pucBuffer =
-			p2pBuildReAssocReqFrameCommonIEs(prAdapter,
-			prMsduInfo, pucBuffer);
-		if (pucBuffer == NULL)
-			return;
-	}
+		    p2pBuildReAssocReqFrameCommonIEs(prAdapter, prMsduInfo,
+						     pucBuffer);
 
 #endif
 #if CFG_ENABLE_BT_OVER_WIFI
@@ -742,8 +714,6 @@ uint32_t assocSendReAssocReqFrame(IN struct ADAPTER *prAdapter,
 	/* Append non-wfa vendor specific ies for AIS mode */
 	assoc_build_nonwfa_vend_ie(prAdapter, prMsduInfo);
 #endif
-
-	sortAssocReqIE(prAdapter, prMsduInfo, fgIsReAssoc);
 
 	/* 4 <6> Update the (Re)association request information */
 	if (IS_STA_IN_AIS(prStaRec)) {
@@ -1472,11 +1442,6 @@ uint32_t assocProcessRxAssocReqFrame(IN struct ADAPTER *prAdapter,
 	}
 
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex);
-	if (prBssInfo == NULL) {
-		DBGLOG(SAA, ERROR, "prBssInfo is %d NULL!\n",
-			prStaRec->ucBssIndex);
-		return WLAN_STATUS_FAILURE;
-	}
 
 	/* Check if this Disassoc Frame is coming from Target BSSID */
 	if (UNEQUAL_MAC_ADDR(prAssocReqFrame->aucBSSID, prBssInfo->aucBSSID))
@@ -1600,17 +1565,12 @@ uint32_t assocProcessRxAssocReqFrame(IN struct ADAPTER *prAdapter,
 				return WLAN_STATUS_FAILURE;
 			}
 			break;
-		case ELEM_ID_RESERVED:
 #if (CFG_SUPPORT_802_11AX == 1)
+		case ELEM_ID_RESERVED:
 			if (IE_ID_EXT(pucIE) == ELEM_EXT_ID_HE_CAP)
 				prStaRec->ucPhyTypeSet |= PHY_TYPE_SET_802_11AX;
-#endif
-#if (CFG_SUPPORT_802_11BE == 1)
-			if (IE_ID_EXT(pucIE) == EID_EXT_EHT_CAPS)
-				prStaRec->ucPhyTypeSet |= PHY_TYPE_SET_802_11BE;
-#endif
 			break;
-
+#endif
 		default:
 			for (i = 0;
 			     i <
@@ -1942,7 +1902,7 @@ assocComposeReAssocRespFrameHeaderAndFF(IN struct STA_RECORD *prStaRec,
  * @retval WLAN_STATUS_SUCCESS   Successfully send frame to TX Module
  */
 /*----------------------------------------------------------------------------*/
-struct MSDU_INFO *assocComposeReAssocRespFrame(IN struct ADAPTER *prAdapter,
+uint32_t assocSendReAssocRespFrame(IN struct ADAPTER *prAdapter,
 				   IN struct STA_RECORD *prStaRec)
 {
 	struct BSS_INFO *prBssInfo;
@@ -1994,19 +1954,12 @@ struct MSDU_INFO *assocComposeReAssocRespFrame(IN struct ADAPTER *prAdapter,
 	if (prMsduInfo == NULL) {
 		DBGLOG(AAA, WARN,
 		       "No PKT_INFO_T for sending (Re)Assoc Response.\n");
-		return NULL;
+		return WLAN_STATUS_RESOURCES;
 	}
 	/* 4 <2> Compose (Re)Association Request frame header and fixed fields
 	 *       in MSDU_INfO_T.
 	 */
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex);
-
-	if (prBssInfo == NULL) {
-		DBGLOG(AAA, WARN, "prBssInfo is %d NULL\n",
-			prStaRec->ucBssIndex);
-		cnmMgtPktFree(prAdapter, prMsduInfo);
-		return NULL;
-	}
 
 	/* Compose Header and Fixed Field */
 	assocComposeReAssocRespFrameHeaderAndFF(prStaRec,
@@ -2062,18 +2015,6 @@ struct MSDU_INFO *assocComposeReAssocRespFrame(IN struct ADAPTER *prAdapter,
 	 */
 
 	nicTxConfigPktControlFlag(prMsduInfo, MSDU_CONTROL_FLAG_FORCE_TX, TRUE);
-
-	return prMsduInfo;
-} /* end of assocComposeReAssocRespFrame() */
-
-uint32_t assocSendReAssocRespFrame(IN struct ADAPTER *prAdapter,
-				  IN struct STA_RECORD *prStaRec)
-{
-	struct MSDU_INFO *prMsduInfo;
-
-	prMsduInfo = assocComposeReAssocRespFrame(prAdapter, prStaRec);
-	if (!prMsduInfo)
-		return WLAN_STATUS_RESOURCES;
 
 	/* 4 <6> Enqueue the frame to send this (Re)Association request frame.
 	 */
@@ -2181,7 +2122,7 @@ void assocGenerateMDIE(IN struct ADAPTER *prAdapter,
 	if (!prFtIEs->prMDIE) {
 		struct BSS_DESC *prBssDesc =
 		    aisGetTargetBssDesc(prAdapter, ucBssIndex);
-		uint8_t *pucIE = prBssDesc->pucIeBuf;
+		uint8_t *pucIE = &prBssDesc->aucIEBuf[0];
 		uint16_t u2IeLen = prBssDesc->u2IELength;
 		uint16_t u2IeOffSet = 0;
 

@@ -48,26 +48,13 @@
 #include "mt6739.h"
 #include "mtk_wcn_consys_hw.h"
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-#if IS_ENABLED(CONFIG_MTK_EMI_LEGACY_V0)
-#include "soc/mediatek/emi_legacy_v0.h"
-#endif
-#else
 #if CONSYS_EMI_MPU_SETTING
 #include <mach/emi_mpu.h>
 #endif
-#endif
 
 #if CONSYS_PMIC_CTRL_ENABLE
-#include <linux/regulator/consumer.h>
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-#include <linux/regulator/consumer.h>
-#include <linux/mfd/mt6397/core.h>
-#include <linux/mfd/mt6357/registers.h>
-#include <linux/regmap.h>
-#else
 #include <upmu_common.h>
-#endif
+#include <linux/regulator/consumer.h>
 #endif
 
 #ifdef CONFIG_MTK_HIBERNATION
@@ -76,14 +63,8 @@
 
 #include <linux/of_reserved_mem.h>
 
-#if (!COMMON_KERNEL_CLK_SUPPORT)
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-#include <mtk-clkbuf-bridge.h>
-#else
 #if CONSYS_CLOCK_BUF_CTRL
 #include <mtk_clkbuf_ctl.h>
-#endif
-#endif
 #endif
 
 /*******************************************************************************
@@ -122,34 +103,12 @@ static INT32 consys_pmic_get_from_dts(struct platform_device *pdev);
 static INT32 consys_read_irq_info_from_dts(struct platform_device *pdev, PINT32 irq_num, PUINT32 irq_flag);
 static INT32 consys_read_reg_from_dts(struct platform_device *pdev);
 static UINT32 consys_read_cpupcr(VOID);
-static INT32 consys_poll_cpupcr_dump(UINT32 times, UINT32 sleep_ms);
 static VOID force_trigger_assert_debug_pin(VOID);
 static INT32 consys_co_clock_type(VOID);
 static P_CONSYS_EMI_ADDR_INFO consys_soc_get_emi_phy_add(VOID);
 static INT32 consys_emi_coredump_remapping(UINT8 __iomem **addr, UINT32 enable);
 static INT32 consys_reset_emi_coredump(UINT8 __iomem *addr);
 static UINT64 consys_get_options(VOID);
-static INT32 consys_jtag_set_for_mcu(VOID);
-static UINT32 consys_jtag_flag_ctrl(UINT32 enable);
-
-#if (COMMON_KERNEL_PMIC_SUPPORT)
-static INT32 consys_pmic_register_device(VOID);
-static int consys_pmic_mt6357_probe(struct platform_device *pdev);
-#endif
-
-#if (COMMON_KERNEL_CLK_SUPPORT)
-static MTK_WCN_BOOL consys_need_store_pdev(VOID);
-static UINT32 consys_store_pdev(struct platform_device *pdev);
-#endif
-
-enum connsys_debug_cr {
-	CONNSYS_CPU_CLK = 0,
-	CONNSYS_BUS_CLK = 1,
-	CONNSYS_DEBUG_CR1 = 2,
-	CONNSYS_DEBUG_CR2 = 3,
-	CONNSYS_EMI_REMAP = 4,
-	CONNSYS_CR_MAX
-};
 
 /*******************************************************************************
 *                            P U B L I C   D A T A
@@ -159,27 +118,24 @@ enum connsys_debug_cr {
 struct bt_wifi_v33_status gBtWifiV33;
 #endif
 
-#if (COMMON_KERNEL_CLK_SUPPORT)
-static struct platform_device *connsys_pdev;
-#else
 /* CCF part */
-static struct clk *clk_scp_conn_main;	/*ctrl conn_power_on/off */
-#endif
+#if !defined(CONFIG_MTK_CLKMGR)
+struct clk *clk_scp_conn_main;	/*ctrl conn_power_on/off */
+/* struct clk *clk_infra_conn_main; */	/*ctrl infra_connmcu_bus clk */
+#endif /* !defined(CONFIG_MTK_LEGACY) */
+
 
 /* PMIC part */
 #if CONSYS_PMIC_CTRL_ENABLE
 #if !defined(CONFIG_MTK_LEGACY)
-static struct regulator *reg_VCN18;
-static struct regulator *reg_VCN28;
-static struct regulator *reg_VCN33_BT;
-static struct regulator *reg_VCN33_WIFI;
-#endif
-#if (COMMON_KERNEL_PMIC_SUPPORT)
-struct regmap *g_regmap_mt6357;
+struct regulator *reg_VCN18;
+struct regulator *reg_VCN28;
+struct regulator *reg_VCN33_BT;
+struct regulator *reg_VCN33_WIFI;
 #endif
 #endif
 
-static EMI_CTRL_STATE_OFFSET mtk_wcn_emi_state_off = {
+EMI_CTRL_STATE_OFFSET mtk_wcn_emi_state_off = {
 	.emi_apmem_ctrl_state = EXP_APMEM_CTRL_STATE,
 	.emi_apmem_ctrl_host_sync_state = EXP_APMEM_CTRL_HOST_SYNC_STATE,
 	.emi_apmem_ctrl_host_sync_num = EXP_APMEM_CTRL_HOST_SYNC_NUM,
@@ -197,7 +153,7 @@ static EMI_CTRL_STATE_OFFSET mtk_wcn_emi_state_off = {
 	.emi_apmem_ctrl_assert_flag = EXP_APMEM_CTRL_ASSERT_FLAG,
 };
 
-static CONSYS_EMI_ADDR_INFO mtk_wcn_emi_addr_info = {
+CONSYS_EMI_ADDR_INFO mtk_wcn_emi_addr_info = {
 	.emi_phy_addr = CONSYS_EMI_FW_PHY_BASE,
 	.paged_trace_off = CONSYS_EMI_PAGED_TRACE_OFFSET,
 	.paged_dump_off = CONSYS_EMI_PAGED_DUMP_OFFSET,
@@ -206,7 +162,7 @@ static CONSYS_EMI_ADDR_INFO mtk_wcn_emi_addr_info = {
 	.emi_core_dump_offset = CONSYS_EMI_COREDUMP_OFFSET,
 };
 
-WMT_CONSYS_IC_OPS consys_ic_ops_mt6739 = {
+WMT_CONSYS_IC_OPS consys_ic_ops = {
 	.consys_ic_clock_buffer_ctrl = consys_clock_buffer_ctrl,
 	.consys_ic_hw_reset_bit_set = consys_hw_reset_bit_set,
 	.consys_ic_hw_spm_clk_gating_enable = consys_hw_spm_clk_gating_enable,
@@ -229,23 +185,12 @@ WMT_CONSYS_IC_OPS consys_ic_ops_mt6739 = {
 	.consys_ic_read_irq_info_from_dts = consys_read_irq_info_from_dts,
 	.consys_ic_read_reg_from_dts = consys_read_reg_from_dts,
 	.consys_ic_read_cpupcr = consys_read_cpupcr,
-	.consys_ic_poll_cpupcr_dump = consys_poll_cpupcr_dump,
 	.ic_force_trigger_assert_debug_pin = force_trigger_assert_debug_pin,
 	.consys_ic_co_clock_type = consys_co_clock_type,
 	.consys_ic_soc_get_emi_phy_add = consys_soc_get_emi_phy_add,
 	.consys_ic_emi_coredump_remapping = consys_emi_coredump_remapping,
 	.consys_ic_reset_emi_coredump = consys_reset_emi_coredump,
 	.consys_ic_get_options = consys_get_options,
-	.consys_ic_jtag_set_for_mcu = consys_jtag_set_for_mcu,
-	.consys_ic_jtag_flag_ctrl = consys_jtag_flag_ctrl,
-
-#if COMMON_KERNEL_PMIC_SUPPORT
-	.consys_ic_pmic_register_device = consys_pmic_register_device,
-#endif
-#if (COMMON_KERNEL_CLK_SUPPORT)
-	.consys_ic_need_store_pdev = consys_need_store_pdev,
-	.consys_ic_store_pdev = consys_store_pdev,
-#endif
 };
 
 /*******************************************************************************
@@ -257,27 +202,7 @@ WMT_CONSYS_IC_OPS consys_ic_ops_mt6739 = {
 *                              F U N C T I O N S
 ********************************************************************************
 */
-static UINT32 gJtagCtrl;
-
-#if (COMMON_KERNEL_PMIC_SUPPORT)
-#ifdef CONFIG_OF
-const struct of_device_id consys_pmic_mt6357_of_ids[] = {
-	{.compatible = "mediatek,mt6357-consys",},
-	{}
-};
-#endif
-
-static struct platform_driver consys_pmic_mt6357_dev_drv = {
-	.probe = consys_pmic_mt6357_probe,
-	.driver = {
-		.name = "mt6357-consys",
-#ifdef CONFIG_OF
-		.of_match_table = consys_pmic_mt6357_of_ids,
-#endif
-		},
-};
-#endif
-
+UINT32 gJtagCtrl;
 #if CONSYS_ENALBE_SET_JTAG
 #define JTAG_ADDR1_BASE 0x10002000
 PINT8 jtag_addr1 = (PINT8)JTAG_ADDR1_BASE;
@@ -287,7 +212,7 @@ PINT8 jtag_addr1 = (PINT8)JTAG_ADDR1_BASE;
 	readl(((PUINT32)(jtag_addr1+(addr-JTAG_ADDR1_BASE))))
 #endif
 
-static INT32 consys_jtag_set_for_mcu(VOID)
+INT32 mtk_wcn_consys_jtag_set_for_mcu(VOID)
 {
 #if CONSYS_ENALBE_SET_JTAG
 
@@ -414,53 +339,15 @@ static INT32 consys_jtag_set_for_mcu(VOID)
 	return 0;
 }
 
-static UINT32 consys_jtag_flag_ctrl(UINT32 enable)
+UINT32 mtk_wcn_consys_jtag_flag_ctrl(UINT32 en)
 {
-	WMT_PLAT_PR_INFO("%s jtag set for MCU\n", enable ? "enable" : "disable");
-	gJtagCtrl = enable;
+	WMT_PLAT_PR_INFO("%s jtag set for MCU\n", en ? "enable" : "disable");
+	gJtagCtrl = en;
 	return 0;
 }
-
-#if COMMON_KERNEL_PMIC_SUPPORT
-static INT32 consys_pmic_register_device(VOID)
-{
-	int ret;
-
-	ret = platform_driver_register(&consys_pmic_mt6357_dev_drv);
-	if (ret)
-		WMT_PLAT_PR_INFO("WMT pmic mt6357 driver registered failed(%d)\n", ret);
-	else
-		WMT_PLAT_PR_INFO("%s mt6357 ok.\n", __func__);
-
-	return 0;
-}
-#endif
-
-#if CONSYS_PMIC_CTRL_ENABLE
-#if (COMMON_KERNEL_PMIC_SUPPORT)
-static int consys_pmic_mt6357_probe(struct platform_device *pdev)
-{
-	struct mt6397_chip *mt6397 = dev_get_drvdata(pdev->dev.parent);
-
-	if (!mt6397) {
-		WMT_PLAT_PR_INFO("%s mt6397 is NULL\n", __func__);
-		return -1;
-	}
-
-	g_regmap_mt6357 = mt6397->regmap;
-	if (!g_regmap_mt6357) {
-		WMT_PLAT_PR_INFO("%s mt6397->regmap is NULL\n", __func__);
-		return -1;
-	}
-	WMT_PLAT_PR_INFO("%s get regmap_mt6357 success!!\n", __func__);
-	return 0;
-}
-#endif
-#endif
 
 static INT32 consys_clk_get_from_dts(struct platform_device *pdev)
 {
-#if (!COMMON_KERNEL_CLK_SUPPORT)
 #ifdef CONFIG_OF		/*use DT */
 #if !defined(CONFIG_MTK_CLKMGR)
 	clk_scp_conn_main = devm_clk_get(&pdev->dev, "conn");
@@ -479,7 +366,6 @@ static INT32 consys_clk_get_from_dts(struct platform_device *pdev)
 #endif
 
 #endif /* !defined(CONFIG_MTK_LEGACY) */
-#endif
 #endif
 	return 0;
 }
@@ -509,9 +395,6 @@ static INT32 consys_pmic_get_from_dts(struct platform_device *pdev)
 
 static INT32 consys_co_clock_type(VOID)
 {
-#if COMMON_KERNEL_PMIC_SUPPORT
-	return 0;
-#else
 	UINT32 retval = 0;
 	UINT32 back_up = 0;
 	UINT32 co_clock_type = 0;
@@ -530,18 +413,15 @@ static INT32 consys_co_clock_type(VOID)
 		WMT_PLAT_PR_INFO("pmic_register_val = 0x%x, co_clock_type = %d,co-TSX mode\n", retval, co_clock_type);
 	}
 	return co_clock_type;
-#endif
 }
 
 static INT32 consys_clock_buffer_ctrl(MTK_WCN_BOOL enable)
 {
-#if (!COMMON_KERNEL_CLK_SUPPORT)
 #if CONSYS_CLOCK_BUF_CTRL
 	if (enable == MTK_WCN_BOOL_TRUE)
 		KERNEL_clk_buf_ctrl(CLK_BUF_CONN, 1);
 	else if (enable == MTK_WCN_BOOL_FALSE)
 		KERNEL_clk_buf_ctrl(CLK_BUF_CONN, 0);
-#endif
 #endif
 	return 0;
 }
@@ -594,19 +474,6 @@ static INT32 consys_hw_power_ctrl(MTK_WCN_BOOL enable)
 
 	if (enable) {
 #if CONSYS_PWR_ON_OFF_API_AVAILABLE
-#if (COMMON_KERNEL_CLK_SUPPORT)
-		iRet = pm_runtime_get_sync(&connsys_pdev->dev);
-		if (iRet)
-			WMT_PLAT_PR_INFO("pm_runtime_get_sync() fail(%d)\n", iRet);
-		else
-			WMT_PLAT_PR_INFO("pm_runtime_get_sync() CONSYS ok\n");
-
-		iRet = device_init_wakeup(&connsys_pdev->dev, true);
-		if (iRet)
-			WMT_PLAT_PR_INFO("device_init_wakeup(true) fail.\n");
-		else
-			WMT_PLAT_PR_INFO("device_init_wakeup(true) CONSYS ok\n");
-#else
 #if defined(CONFIG_MTK_CLKMGR)
 		iRet = conn_power_on();	/* consult clkmgr owner. */
 		if (iRet)
@@ -618,7 +485,7 @@ static INT32 consys_hw_power_ctrl(MTK_WCN_BOOL enable)
 			WMT_PLAT_PR_ERR("clk_prepare_enable(clk_scp_conn_main) fail(%d)\n", iRet);
 		WMT_PLAT_PR_DBG("clk_prepare_enable(clk_scp_conn_main) ok\n");
 #endif /* defined(CONFIG_MTK_LEGACY) */
-#endif
+
 #else
 
 #ifdef CONFIG_OF		/*use DT */
@@ -689,19 +556,6 @@ static INT32 consys_hw_power_ctrl(MTK_WCN_BOOL enable)
 #endif /* CONSYS_PWR_ON_OFF_API_AVAILABLE */
 	} else {
 #if CONSYS_PWR_ON_OFF_API_AVAILABLE
-#if (COMMON_KERNEL_CLK_SUPPORT)
-		iRet = device_init_wakeup(&connsys_pdev->dev, false);
-		if (iRet)
-			WMT_PLAT_PR_INFO("device_init_wakeup(false) fail.\n");
-		else
-			WMT_PLAT_PR_INFO("device_init_wakeup(false) CONSYS ok\n");
-
-		iRet = pm_runtime_put_sync(&connsys_pdev->dev);
-		if (iRet)
-			WMT_PLAT_PR_INFO("pm_runtime_put_sync() fail.\n");
-		else
-			WMT_PLAT_PR_INFO("pm_runtime_put_sync() CONSYS ok\n");
-#else
 #if defined(CONFIG_MTK_CLKMGR)
 		/*power off connsys by API (MT6582, MT6572 are different) API: conn_power_off() */
 		iRet = conn_power_off();	/* consult clkmgr owner */
@@ -712,7 +566,7 @@ static INT32 consys_hw_power_ctrl(MTK_WCN_BOOL enable)
 		clk_disable_unprepare(clk_scp_conn_main);
 		WMT_PLAT_PR_DBG("clk_disable_unprepare(clk_scp_conn_main) calling\n");
 #endif /* defined(CONFIG_MTK_LEGACY) */
-#endif
+
 #else
 
 #ifdef CONFIG_OF		/*use DT */
@@ -870,7 +724,7 @@ static VOID consys_afe_reg_setting(VOID)
 	UINT8 i = 0;
 
 	/*15.default no need,update ANA_WBG(AFE) CR if needed, CONSYS_AFE_REG */
-	consys_afe_reg_base = ioremap(CONSYS_AFE_REG_BASE, 0x100);
+	consys_afe_reg_base = ioremap_nocache(CONSYS_AFE_REG_BASE, 0x100);
 	if (consys_afe_reg_base) {
 		CONSYS_REG_WRITE(consys_afe_reg_base + CONSYS_AFE_REG_WBG_AFE_01_OFFSET,
 				CONSYS_AFE_REG_WBG_AFE_01_VALUE);
@@ -899,22 +753,12 @@ static INT32 consys_hw_vcn18_ctrl(MTK_WCN_BOOL enable)
 	if (enable) {
 		/*need PMIC driver provide new API protocol */
 		/*1.AP power on VCN_1V8 LDO (with PMIC_WRAP API) VCN_1V8  */
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_EN_ADDR,
-			MT6357_RG_LDO_VCN18_EN_MASK << MT6357_RG_LDO_VCN18_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_SW_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN18_SW_OP_EN_MASK << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_SW_OP_EN, 1);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN18_ON_CTRL, 0);
 #endif
-#endif
-
 		/* VOL_DEFAULT, VOL_1200, VOL_1300, VOL_1500, VOL_1800... */
 #if defined(CONFIG_MTK_LEGACY)
 		hwPowerOn(MT6351_POWER_LDO_VCN18, VOL_1800 * 1000, "wcn_drv");
@@ -934,55 +778,28 @@ static INT32 consys_hw_vcn18_ctrl(MTK_WCN_BOOL enable)
 				WMT_PLAT_PR_ERR("WMT do BT PMIC on fail!\n");
 		}
 
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_EN, 0);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_BT, 1);
 #endif
-#endif
 	} else {
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_EN_ADDR,
-			MT6357_RG_LDO_VCN18_EN_MASK << MT6357_RG_LDO_VCN18_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_SW_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN18_SW_OP_EN_MASK << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_SW_OP_EN, 1);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_BT, 0);
 #endif
-#endif
 		if (reg_VCN33_BT)
 			regulator_disable(reg_VCN33_BT);
 
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_EN_ADDR,
-			MT6357_RG_LDO_VCN18_EN_MASK << MT6357_RG_LDO_VCN18_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN18_SW_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN18_SW_OP_EN_MASK << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN18_SW_OP_EN_SHIFT);
-#else
 		/*AP power off MT6351L VCN_1V8 LDO */
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN18_SW_OP_EN, 1);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN18_ON_CTRL, 0);
-#endif
 #endif
 #if defined(CONFIG_MTK_LEGACY)
 		hwPowerDown(MT6351_POWER_LDO_VCN18, "wcn_drv");
@@ -1004,36 +821,18 @@ static VOID consys_vcn28_hw_mode_ctrl(UINT32 enable)
 {
 #if CONSYS_PMIC_CTRL_ENABLE
 	if (enable) {
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN28_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN28_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN28_HW0_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN28_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN28_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN28_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN28_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN28_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN28_HW0_OP_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN28_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN28_ON_CTRL, 1);
 #endif
-#endif
 	} else {
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN28_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN28_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN28_HW0_OP_EN_SHIFT,
-			0 << MT6357_RG_LDO_VCN28_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN28_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN28_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN28_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN28_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN28_HW0_OP_EN, 0);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN28_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN28_ON_CTRL, 0);
-#endif
 #endif
 	}
 #endif
@@ -1118,20 +917,11 @@ static INT32 consys_hw_bt_vcn33_ctrl(UINT32 enable)
 		}
 #endif
 
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_BT, 1);
-#endif
 #endif
 
 #endif
@@ -1140,20 +930,11 @@ static INT32 consys_hw_bt_vcn33_ctrl(UINT32 enable)
 		/*do BT PMIC off */
 		/*switch BT PALDO control from HW mode to SW mode:0x416[5]-->0x0 */
 #if CONSYS_PMIC_CTRL_ENABLE
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_EN, 0);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_BT, 0);
-#endif
 #endif
 #if defined(CONFIG_MTK_LEGACY)
 		hwPowerDown(MT6351_POWER_LDO_VCN33_BT, "wcn_drv");
@@ -1187,14 +968,6 @@ static INT32 consys_hw_wifi_vcn33_ctrl(UINT32 enable)
 				WMT_PLAT_PR_ERR("WMT do WIFI PMIC on fail!\n");
 		}
 #endif
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT,
-			1 << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_EN, 1);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_CFG, 0);
@@ -1202,26 +975,16 @@ static INT32 consys_hw_wifi_vcn33_ctrl(UINT32 enable)
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_WIFI, 1);
 #endif
 #endif
-#endif
 		WMT_PLAT_PR_DBG("WMT do WIFI PMIC on\n");
 	} else {
 		/*do WIFI PMIC off */
 		/*switch WIFI PALDO control from HW mode to SW mode:0x418[14]-->0x0 */
 #if CONSYS_PMIC_CTRL_ENABLE
-#if COMMON_KERNEL_PMIC_SUPPORT
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_EN_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_EN_MASK << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_EN_SHIFT);
-		regmap_update_bits(g_regmap_mt6357, MT6357_RG_LDO_VCN33_HW0_OP_CFG_ADDR,
-			MT6357_RG_LDO_VCN33_HW0_OP_CFG_MASK << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT,
-			0 << MT6357_RG_LDO_VCN33_HW0_OP_CFG_SHIFT);
-#else
 #if defined(CONFIG_MTK_PMIC_CHIP_MT6357)
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_EN, 0);
 		KERNEL_pmic_set_register_value(PMIC_RG_LDO_VCN33_HW0_OP_CFG, 0);
 #else
 		KERNEL_pmic_set_register_value(MT6351_PMIC_RG_VCN33_ON_CTRL_WIFI, 0);
-#endif
 #endif
 #if defined(CONFIG_MTK_LEGACY)
 		hwPowerDown(MT6351_POWER_LDO_VCN33_WIFI, "wcn_drv");
@@ -1241,19 +1004,6 @@ static INT32 consys_hw_wifi_vcn33_ctrl(UINT32 enable)
 
 static INT32 consys_emi_mpu_set_region_protection(VOID)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-#if IS_ENABLED(CONFIG_MTK_EMI_LEGACY_V0)
-	/*set MPU for EMI share Memory */
-	WMT_PLAT_PR_INFO("setting MPU for EMI share memory\n");
-
-	/* 5 = Forbidden, 0 = No_protect */
-	emi_mpu_set_region_protection(gConEmiPhyBase + SZ_1M / 2,
-			gConEmiPhyBase + gConEmiSize - 1,
-			22,
-			SET_ACCESS_PERMISSION(LOCK, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
-				FORBIDDEN, NO_PROTECTION, FORBIDDEN, NO_PROTECTION));
-#endif
-#else
 #if CONSYS_EMI_MPU_SETTING
 	/*set MPU for EMI share Memory */
 	WMT_PLAT_PR_INFO("setting MPU for EMI share memory\n");
@@ -1264,7 +1014,6 @@ static INT32 consys_emi_mpu_set_region_protection(VOID)
 			22,
 			SET_ACCESS_PERMISSON(LOCK, FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
 				FORBIDDEN, NO_PROTECTION, FORBIDDEN, NO_PROTECTION));
-#endif
 #endif
 	return 0;
 }
@@ -1377,95 +1126,7 @@ static UINT32 consys_read_cpupcr(VOID)
 		return 0;
 
 	return CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_CPUPCR_OFFSET);
-#else
-	return 0;
 #endif
-}
-
-static UINT32 consys_read_debug_crs(enum connsys_debug_cr cr)
-{
-#ifdef CONFIG_OF		/*use DT */
-	P_CONSYS_EMI_ADDR_INFO emi_phy_addr;
-
-	emi_phy_addr = consys_soc_get_emi_phy_add();
-
-	if (cr == CONNSYS_EMI_REMAP) {
-		if (emi_phy_addr != NULL && emi_phy_addr->emi_remap_offset)
-			return CONSYS_REG_READ(conn_reg.topckgen_base +
-					emi_phy_addr->emi_remap_offset);
-		else
-			WMT_PLAT_PR_INFO("EMI remap has no value\n");
-	}
-
-	if (mtk_consys_check_reg_readable_by_addr(conn_reg.mcu_base + CONSYS_CPUPCR_OFFSET) == 0)
-		return 0;
-
-	if (conn_reg.mcu_base) {
-
-		switch (cr) {
-		case CONNSYS_CPU_CLK:
-			if (mtk_consys_check_reg_readable_by_addr(
-					conn_reg.mcu_base + CONSYS_CPU_CLK_STATUS_OFFSET) == 0)
-				return 0;
-			return CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_CPU_CLK_STATUS_OFFSET);
-		case CONNSYS_BUS_CLK:
-			if (mtk_consys_check_reg_readable_by_addr(
-					conn_reg.mcu_base + CONSYS_BUS_CLK_STATUS_OFFSET) == 0)
-				return 0;
-			return CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_BUS_CLK_STATUS_OFFSET);
-		case CONNSYS_DEBUG_CR1:
-			if (mtk_consys_check_reg_readable_by_addr(
-					conn_reg.mcu_base + CONSYS_DBG_CR1_OFFSET) == 0)
-				return 0;
-			return CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_DBG_CR1_OFFSET);
-		case CONNSYS_DEBUG_CR2:
-			if (mtk_consys_check_reg_readable_by_addr(
-					conn_reg.mcu_base + CONSYS_DBG_CR2_OFFSET) == 0)
-				return 0;
-			return CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_DBG_CR2_OFFSET);
-		default:
-			return 0;
-		}
-	}
-#endif
-	return 0;
-}
-
-static INT32 consys_poll_cpupcr_dump(UINT32 times, UINT32 sleep_ms)
-{
-	UINT64 ts;
-	ULONG nsec;
-	INT32 str_len = 0, i;
-	char str[DBG_LOG_STR_SIZE] = {""};
-	unsigned int remain = DBG_LOG_STR_SIZE;
-	char *p = NULL;
-
-	p = str;
-	for (i = 0; i < times; i++) {
-		osal_get_local_time(&ts, &nsec);
-		str_len = snprintf(p, remain, "%llu.%06lu/0x%08x;", ts, nsec,
-								consys_read_cpupcr());
-		if (str_len < 0) {
-			WMT_PLAT_PR_WARN("%s snprintf fail", __func__);
-			continue;
-		}
-		p += str_len;
-		remain -= str_len;
-
-		if (sleep_ms > 0)
-			osal_sleep_ms(sleep_ms);
-	}
-
-	WMT_PLAT_PR_INFO("TIME/CPUPCR: %s", str);
-	if (mtk_consys_check_reg_readable()) {
-		WMT_PLAT_PR_INFO("CONNSYS cpu:0x%x/bus:0x%x/dbg_cr1:0x%x/dbg_cr2:0x%x/EMIaddr:0x%x\n",
-					  consys_read_debug_crs(CONNSYS_CPU_CLK),
-					  consys_read_debug_crs(CONNSYS_BUS_CLK),
-					  consys_read_debug_crs(CONNSYS_DEBUG_CR1),
-					  consys_read_debug_crs(CONNSYS_DEBUG_CR2),
-					  consys_read_debug_crs(CONNSYS_EMI_REMAP));
-	}
-	return 0;
 }
 
 static UINT32 consys_soc_chipid_get(VOID)
@@ -1478,10 +1139,15 @@ static P_CONSYS_EMI_ADDR_INFO consys_soc_get_emi_phy_add(VOID)
 	return &mtk_wcn_emi_addr_info;
 }
 
+P_WMT_CONSYS_IC_OPS mtk_wcn_get_consys_ic_ops(VOID)
+{
+	return &consys_ic_ops;
+}
+
 static INT32 consys_emi_coredump_remapping(UINT8 __iomem **addr, UINT32 enable)
 {
 	if (enable) {
-		*addr = ioremap(gConEmiPhyBase + CONSYS_EMI_COREDUMP_OFFSET, CONSYS_EMI_MEM_SIZE);
+		*addr = ioremap_nocache(gConEmiPhyBase + CONSYS_EMI_COREDUMP_OFFSET, CONSYS_EMI_MEM_SIZE);
 		if (*addr) {
 			WMT_PLAT_PR_INFO("COREDUMP EMI mapping OK virtual(0x%p) physical(0x%x)\n",
 					   *addr, (UINT32) gConEmiPhyBase + CONSYS_EMI_COREDUMP_OFFSET);
@@ -1512,19 +1178,6 @@ static INT32 consys_reset_emi_coredump(UINT8 __iomem *addr)
 	memset_io(addr + CONSYS_EMI_PAGED_DUMP_OFFSET, 0, 0x8000);
 	return 0;
 }
-
-#if (COMMON_KERNEL_CLK_SUPPORT)
-static MTK_WCN_BOOL consys_need_store_pdev(VOID)
-{
-	return MTK_WCN_BOOL_TRUE;
-}
-
-static UINT32 consys_store_pdev(struct platform_device *pdev)
-{
-	connsys_pdev = pdev;
-	return 0;
-}
-#endif
 
 static UINT64 consys_get_options(VOID)
 {

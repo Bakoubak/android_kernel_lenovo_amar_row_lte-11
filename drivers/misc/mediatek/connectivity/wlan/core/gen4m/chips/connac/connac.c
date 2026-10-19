@@ -157,7 +157,8 @@ void connacConstructFirmwarePrio(struct GLUE_INFO *prGlueInfo,
 				apucConnacFwName[ucIdx],
 				CFG_WIFI_IP_SET,
 				aucFlavor,
-				1);
+				wlanGetEcoVersion(
+					prGlueInfo->prAdapter));
 		if (ret >= 0 && ret < CFG_FW_NAME_MAX_LEN)
 			(*pucNameIdx) += 1;
 		else
@@ -172,7 +173,8 @@ void connacConstructFirmwarePrio(struct GLUE_INFO *prGlueInfo,
 				apucConnacFwName[ucIdx],
 				CFG_WIFI_IP_SET,
 				aucFlavor,
-				1);
+				wlanGetEcoVersion(
+					prGlueInfo->prAdapter));
 		if (ret >= 0 && ret < CFG_FW_NAME_MAX_LEN)
 			(*pucNameIdx) += 1;
 		else
@@ -258,7 +260,7 @@ struct BUS_INFO connac_bus_info = {
 	.hifRst = NULL,
 	.initPcieInt = NULL,
 	.DmaShdlInit = asicPcieDmaShdlInit,
-	.setDmaIntMask = asicPdmaIntMaskConfig,
+	.setPdmaIntMask = asicPdmaIntMaskConfig,
 #endif /* _HIF_PCIE || _HIF_AXI */
 #if defined(_HIF_USB)
 	.u4UdmaWlCfg_0_Addr = CONNAC_UDMA_WLCFG_0,
@@ -318,7 +320,6 @@ struct CHIP_DBG_OPS connac_debug_ops = {
 	.showCsrInfo = halShowHostCsrInfo,
 	.showDmaschInfo = halShowDmaschInfo,
 	.dumpMacInfo = haldumpMacInfo,
-	.dumpTxdInfo = halDumpTxdInfo,
 #else
 	.showPdmaInfo = NULL,
 	.showPseInfo = NULL,
@@ -327,7 +328,6 @@ struct CHIP_DBG_OPS connac_debug_ops = {
 	.showCsrInfo = NULL,
 	.showDmaschInfo = NULL,
 	.dumpMacInfo = NULL,
-	.dumpTxdInfo = NULL,
 #endif
 	.showWtblInfo = NULL,
 	.showHifInfo = NULL,

@@ -220,6 +220,19 @@ typedef enum _ENUM_CHIP_DUMP_STATE_T {
 	STP_CHIP_DUMP_MAX
 } ENUM_CHIP_DUMP_STATE, *P_ENUM_CHIP_DUMP_STATE_T;
 
+#define CONSYS_BUS_CLK_STATUS_OFFSET	0x00000100
+#define CONSYS_CPU_CLK_STATUS_OFFSET	0x0000010c
+#define CONSYS_DBG_CR1_OFFSET		0x00000408
+#define CONSYS_DBG_CR2_OFFSET		0x0000040c
+typedef enum _ENUM_CONNSYS_DEBUG_CR {
+	CONNSYS_CPU_CLK = 0,
+	CONNSYS_BUS_CLK = 1,
+	CONNSYS_DEBUG_CR1 = 2,
+	CONNSYS_DEBUG_CR2 = 3,
+	CONNSYS_EMI_REMAP = 4,
+	CONNSYS_CR_MAX
+} ENUM_CONNSYS_DEBUG_CR, *P_ENUM_CONNSYS_DEBUG_CR;
+
 typedef enum {
 	WMT_SLEEP_COUNT_TOP = 0,
 	WMT_SLEEP_COUNT_MCU = 1,
@@ -429,7 +442,6 @@ INT32 wmt_plat_set_dynamic_dumpmem(PUINT32 buf);
 #if CFG_WMT_LTE_COEX_HANDLING
 INT32 wmt_plat_get_tdm_antsel_index(VOID);
 #endif
-INT32 wmt_plat_consys_hw_init(VOID);
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

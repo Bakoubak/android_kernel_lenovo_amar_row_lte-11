@@ -267,8 +267,7 @@ enum fm_timer_ctrl {
 	FM_TIMER_CTRL_MAX
 };
 
-#define FM_TIMER_FLAG_INITED (1<<0)
-#define FM_TIMER_FLAG_ACTIVATED (1<<1)
+#define FM_TIMER_FLAG_ACTIVATED (1<<0)
 
 struct fm_timer {
 	signed int ref;
@@ -288,7 +287,6 @@ struct fm_timer {
 	unsigned char tx_pwr_ctrl_en;
 	unsigned char tx_rtc_ctrl_en;
 	unsigned char tx_desense_en;
-	struct fm_lock *lock;
 
 	/* timer methods */
 #if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE

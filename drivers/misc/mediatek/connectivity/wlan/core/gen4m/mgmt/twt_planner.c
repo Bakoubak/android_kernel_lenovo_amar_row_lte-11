@@ -488,7 +488,7 @@ twtPlannerAddAgrtTbl(
 				CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 				EXT_CMD_ID_TWT_AGRT_UPDATE,
 				TRUE,
-				FALSE,
+				TRUE,
 				fgIsOid,
 				pfCmdDoneHandler,
 				pfCmdTimeoutHandler,
@@ -507,7 +507,6 @@ twtPlannerAddAgrtTbl(
 	}
 #endif
 
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
 
 	return rWlanStatus;
 }
@@ -573,15 +572,13 @@ twtPlannerResumeAgrtTbl(struct ADAPTER *prAdapter,
 			CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 			EXT_CMD_ID_TWT_AGRT_UPDATE,
 			TRUE,
-			FALSE,
+			TRUE,
 			fgIsOid,
 			pfCmdDoneHandler,
 			pfCmdTimeoutHandler,
 			sizeof(struct _EXT_CMD_TWT_ARGT_UPDATE_T),
 			(uint8_t *) (prTWTAgrtUpdate),
 			NULL, 0);
-
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
 
 	return rWlanStatus;
 }
@@ -642,15 +639,13 @@ twtPlannerModifyAgrtTbl(struct ADAPTER *prAdapter,
 			CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 			EXT_CMD_ID_TWT_AGRT_UPDATE,
 			TRUE,
-			FALSE,
+			TRUE,
 			fgIsOid,
 			pfCmdDoneHandler,
 			pfCmdTimeoutHandler,
 			sizeof(struct _EXT_CMD_TWT_ARGT_UPDATE_T),
 			(uint8_t *) (prTWTAgrtUpdate),
 			NULL, 0);
-
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
 
 	return rWlanStatus;
 }
@@ -710,15 +705,13 @@ twtPlannerDelAgrtTbl(struct ADAPTER *prAdapter,
 			CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 			EXT_CMD_ID_TWT_AGRT_UPDATE,
 			TRUE,
-			FALSE,
+			TRUE,
 			fgIsOid,
 			pfCmdDoneHandler,
 			pfCmdTimeoutHandler,
 			sizeof(struct _EXT_CMD_TWT_ARGT_UPDATE_T),
 			(uint8_t *) (prTWTAgrtUpdate),
 			NULL, 0);
-
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
 
 	return rWlanStatus;
 }
@@ -753,15 +746,13 @@ twtPlannerTeardownAgrtTbl(struct ADAPTER *prAdapter,
 			CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 			EXT_CMD_ID_TWT_AGRT_UPDATE,
 			TRUE,
-			FALSE,
+			TRUE,
 			fgIsOid,
 			pfCmdDoneHandler,
 			pfCmdTimeoutHandler,
 			sizeof(struct _EXT_CMD_TWT_ARGT_UPDATE_T),
 			(uint8_t *) (prTWTAgrtUpdate),
 			NULL, 0);
-
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
 
 	return rWlanStatus;
 }
@@ -799,7 +790,7 @@ uint32_t twtPlannerReset(
 			CMD_ID_LAYER_0_EXT_MAGIC_NUM,
 			EXT_CMD_ID_TWT_AGRT_UPDATE,
 			TRUE,
-			FALSE,
+			TRUE,
 			FALSE,
 			NULL,
 			NULL,
@@ -826,52 +817,8 @@ uint32_t twtPlannerReset(
 	g_TwtSmartStaCtrl.eState = TWT_SMART_STA_STATE_IDLE;
 #endif
 
-	cnmMemFree(prAdapter, prTWTAgrtUpdate);
-
 	return rWlanStatus;
 }
-
-#if (CFG_TWT_STA_DIRECT_TEARDOWN == 1)
-void twtPlannerTearingdown(
-	struct ADAPTER *prAdapter,
-	struct STA_RECORD *prStaRec,
-	uint8_t ucFlowId)
-{
-	struct BSS_INFO *prBssInfo;
-
-	ASSERT(prAdapter);
-	ASSERT(prStaRec);
-
-	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prStaRec->ucBssIndex);
-
-	if (prBssInfo == NULL) {
-		DBGLOG(TWT_PLANNER, ERROR, "No bssinfo to teardown\n");
-
-		return;
-	}
-
-	/* Delete driver & FW TWT agreement entry */
-	twtPlannerDelAgrtTbl(prAdapter, prBssInfo, prStaRec,
-		ucFlowId, FALSE,
-		NULL, NULL /* handle TWT cmd timeout? */, TRUE);
-
-	/* Teardown FW TWT agreement entry */
-	twtPlannerTeardownAgrtTbl(prAdapter, prStaRec,
-		FALSE, NULL, NULL /* handle TWT cmd timeout? */);
-
-#if (CFG_TWT_SMART_STA == 1)
-	g_TwtSmartStaCtrl.fgTwtSmartStaActivated = FALSE;
-	g_TwtSmartStaCtrl.fgTwtSmartStaReq = FALSE;
-	g_TwtSmartStaCtrl.fgTwtSmartStaTeardownReq = FALSE;
-	g_TwtSmartStaCtrl.ucBssIndex = 0;
-	g_TwtSmartStaCtrl.ucFlowId = 0;
-	g_TwtSmartStaCtrl.u4CurTp = 0;
-	g_TwtSmartStaCtrl.u4LastTp = 0;
-	g_TwtSmartStaCtrl.u4TwtSwitch == 0;
-	g_TwtSmartStaCtrl.eState = TWT_SMART_STA_STATE_IDLE;
-#endif
-}
-#endif
 
 uint64_t twtPlannerAdjustNextTWT(struct ADAPTER *prAdapter,
 	uint8_t ucBssIdx, uint8_t ucFlowId,
@@ -924,13 +871,6 @@ void twtPlannerGetTsfDone(
 		prCmdInfo->pvInformationBuffer;
 
 	ASSERT(prGetTsfCtxt);
-
-	if (prGetTsfCtxt->ucBssIdx >= P2P_DEV_BSS_INDEX) {
-		DBGLOG(TWT_PLANNER, ERROR,
-			"Error prGetTsfCtxt->ucBssIdx %d\n",
-			prGetTsfCtxt->ucBssIdx);
-		return;
-	}
 
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, prGetTsfCtxt->ucBssIdx);
 	ASSERT(prBssInfo);
@@ -1048,8 +988,6 @@ twtPlannerGetCurrentTSF(
 					(uint8_t *) (prMacInfoCmd),
 					pvSetBuffer, u4SetBufferLen);
 
-	cnmMemFree(prAdapter, prMacInfoCmd);
-
 	return rWlanStatus;
 }
 
@@ -1123,7 +1061,8 @@ void twtPlannerSetParams(
 	}
 
 	/* For COEX concern, suppose only 5G is allowed */
-	if (!(prAdapter->rWifiVar.ucTWTStaBandBitmap & BIT(prBssInfo->eBand))) {
+	if ((prAdapter->rWifiVar.ucTWTStaBandBitmap & prBssInfo->eBand)
+		!= prBssInfo->eBand) {
 		DBGLOG(TWT_PLANNER, ERROR,
 			"TWT BAND support bitmaps(%u)!=%u\n",
 			prAdapter->rWifiVar.ucTWTStaBandBitmap,

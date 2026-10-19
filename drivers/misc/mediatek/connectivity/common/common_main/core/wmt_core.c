@@ -33,7 +33,9 @@
 */
 #include <connectivity_build_in_adapter.h>
 #include "osal_typedef.h"
+#if 0
 #include "connsys_debug_utility.h"
+#endif
 #include "wmt_lib.h"
 #include "wmt_core.h"
 #include "wmt_ctrl.h"
@@ -170,8 +172,6 @@ static INT32 opfunc_blank_status_ctrl(P_WMT_OP pWmtOp);
 static INT32 opfunc_met_ctrl(P_WMT_OP pWmtOp);
 static INT32 opfunc_gps_suspend(P_WMT_OP pWmtOp);
 static INT32 opfunc_get_consys_state(P_WMT_OP pWmtOp);
-static INT32 opfunc_dump_pc_log(P_WMT_OP pWmtOp);
-static INT32 opfunc_dump_cpupcr(P_WMT_OP pWmtOp);
 
 /*******************************************************************************
 *                            P U B L I C   D A T A
@@ -341,8 +341,6 @@ static const WMT_OPID_FUNC wmt_core_opfunc[] = {
 	[WMT_OPID_MET_CTRL] = opfunc_met_ctrl,
 	[WMT_OPID_GPS_SUSPEND] = opfunc_gps_suspend,
 	[WMT_OPID_GET_CONSYS_STATE] = opfunc_get_consys_state,
-	[WMT_OPID_DUMP_PC_LOG] = opfunc_dump_pc_log,
-	[WMT_OPID_DUMP_CPUPCR] = opfunc_dump_cpupcr,
 };
 
 atomic_t g_wifi_on_off_ready;
@@ -594,17 +592,6 @@ INT32 wmt_core_ctrl(ENUM_WMT_CTRL_T ctrId, PULONG pPa1, PULONG pPa2)
 
 VOID wmt_core_dump_data(PUINT8 pData, PUINT8 pTitle, UINT32 len)
 {
-	PUINT8 ptr = pData;
-	INT32 k = 0;
-
-	WMT_INFO_FUNC("%s len=%d\n", pTitle, len);
-	for (k = 0; k < len; k++) {
-		if (k % 16 == 0)
-			WMT_INFO_FUNC("\n");
-		WMT_INFO_FUNC("0x%02x ", *ptr);
-		ptr++;
-	}
-	WMT_INFO_FUNC("--end\n");
 }
 
 /*!
@@ -1008,16 +995,6 @@ deinit_ic_ops_done:
 
 static VOID wmt_core_dump_func_state(PINT8 pSource)
 {
-	WMT_INFO_FUNC
-	    ("[%s]status(b:%d f:%d g:%d gl5:%d w:%d lpbk:%d coredump:%d wmt:%d ant:%d sd1:%d sd2:%d stp:%d)\n",
-	     (pSource == NULL ? (PINT8) "CORE" : pSource), gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_BT],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_FM], gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_GPS],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_GPSL5],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_WIFI], gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_LPBK],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_COREDUMP], gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_WMT],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_ANT], gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_SDIO1],
-	     gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_SDIO2], gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_STP]
-	    );
 	return;
 
 }
@@ -1115,11 +1092,8 @@ static INT32 wmt_core_hw_check(VOID)
 	case 0x6779:
 	case 0x6768:
 	case 0x6785:
-	case 0x6781:
-	case 0x6789:
 	case 0x6833:
 	case 0x6853:
-	case 0x6855:
 	case 0x6873:
 	case 0x8168:
 		p_ops = &wmt_ic_ops_soc;
@@ -1218,8 +1192,16 @@ static INT32 opfunc_pwr_on(P_WMT_OP pWmtOp)
 	iRet = wmt_core_stp_init();
 	if (iRet) {
 		WMT_ERR_FUNC("WMT-CORE: wmt_core_stp_init fail (%d)\n", iRet);
-		wmt_lib_trigger_assert(WMTDRV_TYPE_WMT, 46);
-		return iRet;
+		osal_assert(0);
+		if (mtk_wcn_stp_get_wmt_trg_assert() == 0) {
+			iErrHandle = wmt_core_stp_deinit();
+			if (iErrHandle)
+				WMT_ERR_FUNC("wmt_core_stp_deinit() failed, Err=%d\n", iErrHandle);
+			iErrHandle = opfunc_pwr_off(pWmtOp);
+			if (iErrHandle)
+				WMT_ERR_FUNC("opfunc_pwr_off fail, Err=%d\n", iErrHandle);
+		}
+		return (iErrHandle) ? iErrHandle : iRet;
 	}
 
 	WMT_DBG_FUNC("WMT-CORE: WMT [FUNC_ON]\n");
@@ -1656,6 +1638,7 @@ static INT32 opfunc_pwr_sv(P_WMT_OP pWmtOp)
 		}
 		WMT_DBG_FUNC("Send wakeup command OK!\n");
 	} else if (pWmtOp->au4OpData[0] == HOST_AWAKE) {
+
 		WMT_DBG_FUNC("**** Send host awake command\n");
 
 		psm_cb = (STP_PSM_CB) pWmtOp->au4OpData[1];
@@ -3580,8 +3563,6 @@ static INT32 opfunc_try_pwr_off(P_WMT_OP pWmtOp)
 	    (gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_COREDUMP] == DRV_STS_POWER_OFF)) {
 		WMT_INFO_FUNC("WMT-CORE:Fun(%d) [POWER_OFF] and power down chip\n", drvType);
 		mtk_wcn_wmt_system_state_reset();
-		/* avoid CONN_LOG_IRQ clear problem*/
-		osal_sleep_ms(1);
 		iRet = opfunc_pwr_off(pWmtOp);
 		if (iRet) {
 			WMT_ERR_FUNC("WMT-CORE: wmt_pwr_off fail(%d) when turn off func(%d)\n",
@@ -3802,8 +3783,6 @@ static INT32 opfunc_get_consys_state(P_WMT_OP pWmtOp)
 	/* dmp cpu_pcr */
 	for (i = 0; i < times; i++) {
 		dmp_op->dmp_info.cpu_pcr[i] = wmt_plat_read_cpupcr();
-		osal_get_local_time(&(dmp_op->dmp_info.sec[i]),
-							&(dmp_op->dmp_info.nsec[i]));
 		if (slp_ms > 0)
 			osal_sleep_ms(slp_ms);
 	}
@@ -3819,37 +3798,4 @@ static INT32 opfunc_get_consys_state(P_WMT_OP pWmtOp)
 done:
 	osal_unlock_sleepable_lock(&dmp_op->lock);
 	return 0;
-}
-
-INT32 opfunc_dump_pc_log(P_WMT_OP pWmtOp)
-{
-
-	/* WMT should be ON */
-	if (gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_WMT] != DRV_STS_FUNC_ON) {
-		WMT_INFO_FUNC("WMT is not on");
-		return -1;
-	}
-	if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_SOC)
-		mtk_wcn_consys_pc_log_dump();
-
-	return 0;
-}
-
-INT32 opfunc_dump_cpupcr(P_WMT_OP pWmtOp)
-{
-	UINT32 times, sleep_ms;
-
-	/* WMT should be ON */
-	if (gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_WMT] != DRV_STS_FUNC_ON) {
-		WMT_INFO_FUNC("WMT is not on");
-		return -1;
-	}
-
-	times = (UINT32)pWmtOp->au4OpData[0];
-	sleep_ms = (UINT32)pWmtOp->au4OpData[1];
-
-	if (sleep_ms > 10 || times > 10)
-		return -1;
-
-	return mtk_wcn_consys_poll_cpucpr_dump(times, sleep_ms);
 }

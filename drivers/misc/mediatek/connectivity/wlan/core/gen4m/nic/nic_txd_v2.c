@@ -300,9 +300,9 @@ void nic_txd_v2_compose(
 	struct HW_MAC_CONNAC2X_TX_DESC *prTxDesc;
 	struct STA_RECORD *prStaRec;
 	struct BSS_INFO *prBssInfo;
-	uint8_t ucEtherTypeOffsetInWord;
+	u_int8_t ucEtherTypeOffsetInWord;
 	u_int32_t u4TxDescAndPaddingLength;
-	uint8_t ucWmmQueSet = 0, ucTarQueue, ucTarPort;
+	u_int8_t ucTarQueue, ucTarPort;
 #if ((CFG_SISO_SW_DEVELOP == 1) || (CFG_SUPPORT_SPE_IDX_CONTROL == 1))
 	enum ENUM_WF_PATH_FAVOR_T eWfPathFavor;
 #endif
@@ -331,39 +331,13 @@ void nic_txd_v2_compose(
 		ucEtherTypeOffsetInWord);
 
 	ucTarPort = nicTxGetTxDestPortIdxByTc(prMsduInfo->ucTC);
-#if defined(SOC3_0)
 	if (ucTarPort == PORT_INDEX_MCU &&
 		prMsduInfo->ucControlFlag & MSDU_CONTROL_FLAG_FORCE_TX) {
 		/* To MCU packet with always tx flag */
 		ucTarQueue = MAC_TXQ_ALTX_0_INDEX;
-	} else
-#endif
-	{
-		if (prBssInfo) {
-			ucWmmQueSet = prBssInfo->ucWmmQueSet;
-#if CFG_SUPPORT_DROP_INVALID_MSDUINFO
-			if (fgIsTemplate != TRUE &&
-				prMsduInfo->ucPacketType == TX_PACKET_TYPE_DATA
-				&& ucWmmQueSet != prMsduInfo->ucWmmQueSet) {
-				prMsduInfo->fgDrop = TRUE;
-				DBGLOG(RSN, ERROR,
-					"WmmQueSet mismatch[%u,%u,%u,%u]\n",
-					prMsduInfo->ucBssIndex,
-					prMsduInfo->ucStaRecIndex,
-					ucWmmQueSet,
-					prMsduInfo->ucWmmQueSet);
-			}
-#endif /* CFG_SUPPORT_DROP_INVALID_MSDUINFO */
-		} else
-			DBGLOG(TX, ERROR, "prBssInfo is NULL\n");
-
+	} else {
 		ucTarQueue = nicTxGetTxDestQIdxByTc(prMsduInfo->ucTC);
-		if (ucTarPort == PORT_INDEX_LMAC) {
-			if (prBssInfo) {
-				ucTarQueue +=
-				  (prBssInfo->ucWmmQueSet * WMM_AC_INDEX_NUM);
-			}
-		}
+		ucTarQueue += (prBssInfo->ucWmmQueSet * WMM_AC_INDEX_NUM);
 	}
 
 #if (CFG_SUPPORT_DMASHDL_SYSDVT)
@@ -403,8 +377,6 @@ void nic_txd_v2_compose(
 #endif
 	HAL_MAC_CONNAC2X_TXD_SET_WLAN_INDEX(
 		prTxDesc, prMsduInfo->ucWlanIndex);
-
-	HAL_MAC_CONNAC2X_TXD_SET_VTA(prTxDesc, 1);
 
 	/* Header format */
 	if (prMsduInfo->fgIs802_11) {
@@ -458,10 +430,8 @@ void nic_txd_v2_compose(
 #endif
 
 	/* Own MAC */
-	if (prBssInfo) {
-		HAL_MAC_CONNAC2X_TXD_SET_OWN_MAC_INDEX(
-			prTxDesc, prBssInfo->ucOwnMacIndex);
-	}
+	HAL_MAC_CONNAC2X_TXD_SET_OWN_MAC_INDEX(
+		prTxDesc, prBssInfo->ucOwnMacIndex);
 
 	if (u4TxDescLength == NIC_TX_DESC_SHORT_FORMAT_LENGTH) {
 		HAL_MAC_CONNAC2X_TXD_SET_SHORT_FORMAT(prTxDesc);
@@ -604,12 +574,10 @@ void nic_txd_v2_compose(
 #if (CFG_SISO_SW_DEVELOP == 1 || CFG_SUPPORT_SPE_IDX_CONTROL == 1)
 		/* Update spatial extension index setting */
 		eWfPathFavor = wlanGetAntPathType(prAdapter, ENUM_WF_NON_FAVOR);
-		if (prBssInfo) {
-			HAL_MAC_CONNAC2X_TXD_SET_SPE_IDX(
-				prTxDesc,
-				wlanGetSpeIdx(prAdapter, prBssInfo->ucBssIndex,
-					eWfPathFavor));
-		}
+		HAL_MAC_CONNAC2X_TXD_SET_SPE_IDX(
+			prTxDesc,
+			wlanGetSpeIdx(prAdapter, prBssInfo->ucBssIndex,
+				eWfPathFavor));
 #endif
 		HAL_MAC_CONNAC2X_TXD_SET_SPE_IDX_SEL(prTxDesc,
 			ENUM_SPE_SEL_BY_TXD);
@@ -617,9 +585,8 @@ void nic_txd_v2_compose(
 		HAL_MAC_CONNAC2X_TXD_SET_FIXED_RATE_ENABLE(prTxDesc);
 
 #if (CFG_SUPPORT_HE_ER == 1)
-		if (prBssInfo &&
-			(prBssInfo->ucErMode == RA_DCM ||
-			prBssInfo->ucErMode == RA_ER_106)) {
+		if (prBssInfo->ucErMode == RA_DCM ||
+			prBssInfo->ucErMode == RA_ER_106) {
 			/* 2 HE LTF */
 			HAL_MAC_CONNAC2X_TXD_SET_HE_LTF(prTxDesc, 1);
 			/* 1.6us GI */

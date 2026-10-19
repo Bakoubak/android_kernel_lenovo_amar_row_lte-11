@@ -61,14 +61,8 @@ static int __init fpsgo_init(void)
 		return -1;
 
 	xgf_est_runtime_fp = xgf_est_runtime;
-	fpsgo_xgf2ko_calculate_target_fps_fp = fpsgo_xgf2ko_calculate_target_fps;
-	fpsgo_xgf2ko_do_recycle_fp = fpsgo_xgf2ko_do_recycle;
 
-	xgff_est_runtime_fp = xgff_est_runtime;
-	xgff_update_start_prev_index_fp = xgff_update_start_prev_index;
-
-	xgf_ema2_predict_fp = xgf_ema2_predict;
-	xgf_ema2_init_fp = xgf_ema2_init;
+	fpsgo_fstb2xgf_do_recycle(1);
 
 	notify_xgf_ko_ready();
 

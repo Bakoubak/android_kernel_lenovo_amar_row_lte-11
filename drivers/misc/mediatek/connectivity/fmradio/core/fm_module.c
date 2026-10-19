@@ -26,9 +26,7 @@
 #include <linux/version.h>
 #include <linux/gpio.h>
 #include <linux/of.h>
-#include <linux/of_device.h>
 #include <linux/of_gpio.h>
-#include <linux/of_irq.h>
 
 #include "fm_config.h"
 #include "fm_main.h"
@@ -43,20 +41,6 @@ unsigned int g_fm_lna_pin_num = FM_NO_LNA_PIN;
 
 /* fm main data structure */
 static struct fm *g_fm;
-
-/* fm atomic counter */
-atomic_t g_fm_ops_cnt = ATOMIC_INIT(0);
-atomic_t g_fm_probe_cnt = ATOMIC_INIT(0);
-
-#define FM_INIT_BIT (0)
-#define FM_DEINIT_BIT (1)
-static unsigned long g_fm_module_flag;
-
-/* fm plat data structure */
-const struct fm_plat_data *g_fm_plat_data;
-
-static struct platform_driver mt_fm_dev_drv;
-
 /* proc file entry */
 static struct proc_dir_entry *g_fm_proc;
 
@@ -92,18 +76,11 @@ static const struct file_operations fm_ops = {
 static ssize_t fm_proc_read(struct file *file, char __user *buf, size_t count, loff_t *ppos);
 static ssize_t fm_proc_write(struct file *file, const char *buffer, size_t count, loff_t *ppos);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static const struct proc_ops fm_proc_ops = {
-	.proc_read = fm_proc_read,
-	.proc_write = fm_proc_write,
-};
-#else
 static const struct file_operations fm_proc_ops = {
 	.owner = THIS_MODULE,
 	.read = fm_proc_read,
 	.write = fm_proc_write,
 };
-#endif
 
 #ifdef CONFIG_COMPAT
 static long fm_ops_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -493,6 +470,12 @@ static long fm_ops_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				goto out;
 			}
 
+			if (fm->chipon == false || fm_pwr_state_get(fm) == FM_PWR_OFF) {
+				WCN_DBG(FM_ERR | MAIN, "ERROR, FM chip is OFF\n");
+				ret = -EFAULT;
+				goto out;
+			}
+
 			if (copy_from_user(&parm_ctl, (void *)arg, sizeof(struct fm_top_rw_parm))) {
 				WCN_DBG(FM_ALT | MAIN, "copy from user error\n");
 				ret = -EFAULT;
@@ -530,6 +513,12 @@ static long fm_ops_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if (g_dbg_level != 0xfffffff7) {
 				WCN_DBG(FM_ERR | MAIN, "Not support FM_IOCTL_HOST_RDWR\n");
+				ret = -EFAULT;
+				goto out;
+			}
+
+			if (fm->chipon == false || fm_pwr_state_get(fm) == FM_PWR_OFF) {
+				WCN_DBG(FM_ERR | MAIN, "ERROR, FM chip is OFF\n");
 				ret = -EFAULT;
 				goto out;
 			}
@@ -709,6 +698,41 @@ static long fm_ops_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				ret = -EFAULT;
 				goto out;
 			}
+			break;
+		}
+
+	case FM_IOCTL_FM_SET_STATUS:{
+			struct fm_status_t fm_stat;
+
+			WCN_DBG(FM_DBG | MAIN, "FM_IOCTL_FM_SET_STATUS");
+
+			if (copy_from_user(&fm_stat, (void *)arg, sizeof(struct fm_status_t))) {
+				ret = -EFAULT;
+				goto out;
+			}
+
+			fm_set_stat(fm, fm_stat.which, fm_stat.stat);
+
+			break;
+		}
+
+	case FM_IOCTL_FM_GET_STATUS:{
+			struct fm_status_t fm_stat;
+
+			WCN_DBG(FM_DBG | MAIN, "FM_IOCTL_FM_GET_STATUS");
+
+			if (copy_from_user(&fm_stat, (void *)arg, sizeof(struct fm_status_t))) {
+				ret = -EFAULT;
+				goto out;
+			}
+
+			fm_get_stat(fm, fm_stat.which, &fm_stat.stat);
+
+			if (copy_to_user((void *)arg, &fm_stat, sizeof(struct fm_status_t))) {
+				ret = -EFAULT;
+				goto out;
+			}
+
 			break;
 		}
 
@@ -1218,6 +1242,7 @@ static ssize_t fm_ops_read(struct file *filp, char *buf, size_t len, loff_t *off
 	return fm_rds_read(fm, buf, copy_len);
 }
 
+atomic_t g_counter = ATOMIC_INIT(0);
 static signed int fm_ops_open(struct inode *inode, struct file *filp)
 {
 	signed int ret = 0;
@@ -1232,10 +1257,9 @@ static signed int fm_ops_open(struct inode *inode, struct file *filp)
 
 	ret = fm_open(fm);
 	filp->private_data = fm;
-	atomic_inc(&g_fm_ops_cnt);
+	atomic_inc(&g_counter);
 
-	WCN_DBG(FM_NTC | MAIN, "fm_ops_open:%d [%d]\n", current->pid,
-		atomic_read(&g_fm_ops_cnt));
+	WCN_DBG(FM_NTC | MAIN, "fm_ops_open:%d [%d]\n", current->pid, atomic_read(&g_counter));
 	return ret;
 }
 
@@ -1246,12 +1270,10 @@ static signed int fm_ops_release(struct inode *inode, struct file *filp)
 /* struct fm *fm = container_of(plat, struct fm, platform); */
 	struct fm *fm = filp->private_data;
 
-	WCN_DBG(FM_NTC | MAIN, "fm_ops_release:%d [%d]\n", current->pid,
-		atomic_read(&g_fm_ops_cnt));
+	WCN_DBG(FM_NTC | MAIN, "fm_ops_release:%d [%d]\n", current->pid, atomic_read(&g_counter));
 
-	if (atomic_dec_and_test(&g_fm_ops_cnt)) {
-		WCN_DBG(FM_ALT | MAIN, "FM power down... [%d]\n",
-			atomic_read(&g_fm_ops_cnt));
+	if (atomic_dec_and_test(&g_counter)) {
+		WCN_DBG(FM_ALT | MAIN, "FM power down... [%d]\n", atomic_read(&g_counter));
 		if (-FM_ELOCK == fm_powerdown(fm, 0)) {
 			WCN_DBG(FM_ALT | MAIN, "FM power down fail. Do it later.\n");
 			fm->timer_wkthd->add_work(fm->timer_wkthd, fm->pwroff_wk);
@@ -1275,17 +1297,16 @@ static signed int fm_ops_flush(struct file *filp, fl_owner_t Id)
 
 static ssize_t fm_proc_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
-#define PROC_READ_BUF_SIZE 3
 	struct fm *fm = g_fm;
 	ssize_t length = 0;
-	char tmpbuf[PROC_READ_BUF_SIZE];
+	char tmpbuf[3];
 	unsigned long pos = *ppos;
 
 	WCN_DBG(FM_NTC | MAIN, "Enter fm_proc_read.\n");
 	/* WCN_DBG(FM_NTC | MAIN, "count = %d\n", count); */
 	/* WCN_DBG(FM_NTC | MAIN, "ppos = %d\n", pos); */
 
-	if (pos != 0 || count < PROC_READ_BUF_SIZE)
+	if (pos != 0)
 		return 0;
 
 	if (!fm) {
@@ -1314,7 +1335,6 @@ static ssize_t fm_proc_read(struct file *file, char __user *buf, size_t count, l
 	WCN_DBG(FM_NTC | MAIN, "Leave fm_proc_read. length = %zu\n", length);
 
 	return length;
-#undef PROC_READ_BUF_SIZE
 }
 
 static ssize_t fm_proc_write(struct file *file, const char *buffer, size_t count, loff_t *ppos)
@@ -1438,11 +1458,6 @@ static signed int fm_mod_init(unsigned int arg)
 	signed int ret = 0;
 	struct fm *fm = NULL;
 
-	if (g_fm != NULL) {
-		WCN_DBG(FM_ALT | MAIN, "%s g_fm is not NULL\n", __func__);
-		return 0;
-	}
-
 	fm = fm_dev_init(0);
 
 	if (!fm) {
@@ -1523,52 +1538,13 @@ static signed int mt_fm_probe(struct platform_device *pdev)
 {
 	signed int ret = 0;
 #ifdef CONFIG_OF
-	struct device *dev = NULL;
 	struct device_node *node = NULL;
-	signed int irq_num = 0, pin_ret = 0;
-	unsigned int host_id = 0, family_id = 0, conn_id = 0;
+	signed int pin_ret = 0;
 #endif
 
-	WCN_DBG(FM_NTC | MAIN, "%s pdev:%p g_fm_probe_cnt:%d\n",
-		__func__, pdev, atomic_read(&g_fm_probe_cnt));
-	atomic_inc(&g_fm_probe_cnt);
-
-	if (pdev == NULL)
-		return -1;
+	WCN_DBG(FM_NTC | MAIN, "%s\n", __func__);
 
 #ifdef CONFIG_OF
-	dev = &pdev->dev;
-	if (dev->of_node) {
-		WCN_DBG(FM_NTC | MAIN, "current compatible:%s",
-				(char *) of_get_property(dev->of_node,
-						"compatible", NULL));
-
-		/* get family id */
-		ret = of_property_read_u32(dev->of_node, "family-id",
-			&family_id);
-		ret = of_property_read_u32(dev->of_node, "host-id",
-			&host_id);
-		ret = of_property_read_u32(dev->of_node, "conn-id",
-			&conn_id);
-
-		/* get irq number */
-		irq_num = irq_of_parse_and_map(dev->of_node, 0);
-
-#define __DUMP_STR__ \
-	"family-id:0x%04x host_id:0x%04x conn_id:0x%04x irq_num:%d\n"
-		WCN_DBG(FM_NTC | MAIN, __DUMP_STR__,
-			family_id, host_id, conn_id, irq_num);
-#undef __DUMP_STR__
-
-		ret = fm_register_irq(&mt_fm_dev_drv, irq_num);
-		if (ret)
-			return ret;
-
-		ret = fm_register_plat(family_id, conn_id);
-		if (ret)
-			return ret;
-	}
-
 	node = of_find_compatible_node(NULL, NULL, "mediatek,fmradio");
 	if (!node)
 		WCN_DBG(FM_NTC | MAIN, "FM-OF: no fm device node\n");
@@ -1615,45 +1591,40 @@ static signed int mt_fm_remove(struct platform_device *pdev)
 }
 
 static struct platform_device *pr_fm_device;
-
-#ifdef CONFIG_OF
-const struct of_device_id fm_of_ids[] = {
-	{
-		.compatible = "mediatek,fm",
-	},
-	{}
+/*
+static struct platform_device mt_fm_device = {
+	.name = FM_NAME,
+	.id = -1,
 };
-#endif
+*/
 
 /* platform driver entry */
 static struct platform_driver mt_fm_dev_drv = {
 	.probe = mt_fm_probe,
 	.remove = mt_fm_remove,
 	.driver = {
-		.name = FM_NAME,
-		.owner = THIS_MODULE,
-		.of_match_table = of_match_ptr(fm_of_ids),
-	}
+		   .name = FM_NAME,
+		   .owner = THIS_MODULE,
+		   }
 };
 
 static signed int mt_fm_init(void)
 {
 	signed int ret = 0;
 
-	WCN_DBG(FM_NTC | MAIN, "%s\n", __func__);
-	if (test_bit(FM_DEINIT_BIT, &g_fm_module_flag)) {
-		WCN_DBG(FM_NTC | MAIN,
-			"mt_fm_exit does not finished yet\n", __func__);
-		return -1;
-	}
-
 	ret = fm_env_setup();
+
 	if (ret) {
 		fm_env_destroy();
 		return ret;
 	}
+	/* register fm device to platform bus */
+	/* ret = platform_device_register(&mt_fm_device);
+	 *
+	 * if (ret)
+	 *	return ret;
+	 */
 
-#ifndef FM_DTS_PROBE
 	pr_fm_device = platform_device_alloc(FM_NAME, 0);
 	if (!pr_fm_device) {
 		WCN_DBG(FM_ERR | MAIN, "fm platform device alloc fail\n");
@@ -1666,7 +1637,6 @@ static signed int mt_fm_init(void)
 		platform_device_put(pr_fm_device);
 		return ret;
 	}
-#endif
 
 	/* register fm driver to platform bus */
 	ret = platform_driver_register(&mt_fm_dev_drv);
@@ -1677,32 +1647,25 @@ static signed int mt_fm_init(void)
 		return ret;
 	}
 
+	fm_register_irq(&mt_fm_dev_drv);
+
 	WCN_DBG(FM_NTC | MAIN, "6. fm platform driver registered\n");
-
-	set_bit(FM_INIT_BIT, &g_fm_module_flag);
-	WCN_DBG(FM_NTC | MAIN, "%s done\n", __func__);
-
 	return ret;
 }
 
 static void mt_fm_exit(void)
 {
 	WCN_DBG(FM_NTC | MAIN, "%s\n", __func__);
-	if (test_bit(FM_INIT_BIT, &g_fm_module_flag)) {
-		set_bit(FM_DEINIT_BIT, &g_fm_module_flag);
-		if (g_fm_lna_pin_num != FM_NO_LNA_PIN) {
-			gpio_free(g_fm_lna_pin_num);
-			WCN_DBG(FM_NTC | MAIN, "free gpio pin %d ok\n",
-				g_fm_lna_pin_num);
-		}
 
-		platform_driver_unregister(&mt_fm_dev_drv);
-		platform_device_unregister(pr_fm_device);
-		fm_env_destroy();
-		clear_bit(FM_DEINIT_BIT, &g_fm_module_flag);
-		clear_bit(FM_INIT_BIT, &g_fm_module_flag);
-		WCN_DBG(FM_NTC | MAIN, "%s done\n", __func__);
+	if (g_fm_lna_pin_num != FM_NO_LNA_PIN) {
+		gpio_free(g_fm_lna_pin_num);
+		WCN_DBG(FM_NTC | MAIN, "free gpio pin %d ok\n", g_fm_lna_pin_num);
 	}
+
+	platform_driver_unregister(&mt_fm_dev_drv);
+	/* platform_device_unregister(&mt_fm_device); */
+	platform_device_unregister(pr_fm_device);
+	fm_env_destroy();
 }
 
 #ifdef MTK_WCN_REMOVE_KERNEL_MODULE
