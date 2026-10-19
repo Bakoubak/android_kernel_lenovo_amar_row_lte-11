@@ -1319,6 +1319,7 @@ out:
 done:
 	xgf_unlock(__func__);
 }
+EXPORT_SYMBOL(fpsgo_fstb2xgf_do_recycle);
 
 static char *xgf_strcat(char *dest, const char *src,
 	size_t buffersize, int *overflow)
@@ -1427,7 +1428,7 @@ static int xgf_enter_est_runtime(int rpid, struct xgf_render *render,
 {
 	int ret;
 
-	WARN_ON(!xgf_est_runtime_fp);
+	//WARN_ON(!xgf_est_runtime_fp);
 
 	if (xgf_est_runtime_fp)
 		ret = xgf_est_runtime_fp(rpid, render, runtime, ts);
