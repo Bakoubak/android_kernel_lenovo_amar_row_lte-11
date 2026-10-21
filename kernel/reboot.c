@@ -522,10 +522,10 @@ static int __init reboot_setup(char *str)
 		enum reboot_mode *mode;
 
 		/*
-		 * Having anything passed on the command line via
-		 * reboot= will cause us to disable DMI checking
-		 * below.
-		 */
+         * Having anything passed on the command line via
+         * reboot= will cause us to disable DMI checking
+         * below.
+         */
 		reboot_default = 0;
 
 		if (!strncmp(str, "panic_", 6)) {
@@ -548,22 +548,22 @@ static int __init reboot_setup(char *str)
 			*mode = REBOOT_HARD;
 			break;
 
-		case 's':
-		{
+		case 's': {
 			int rc;
 
-			if (isdigit(*(str+1))) {
-				rc = kstrtoint(str+1, 0, &reboot_cpu);
+			if (isdigit(*(str + 1))) {
+				rc = kstrtoint(str + 1, 0, &reboot_cpu);
 				if (rc)
 					return rc;
 			} else if (str[1] == 'm' && str[2] == 'p' &&
-				   isdigit(*(str+3))) {
-				rc = kstrtoint(str+3, 0, &reboot_cpu);
+				   isdigit(*(str + 3))) {
+				rc = kstrtoint(str + 3, 0, &reboot_cpu);
 				if (rc)
 					return rc;
 			} else
 				*mode = REBOOT_SOFT;
 			break;
+		}
 
 		case 'g':
 			*mode = REBOOT_GPIO;
