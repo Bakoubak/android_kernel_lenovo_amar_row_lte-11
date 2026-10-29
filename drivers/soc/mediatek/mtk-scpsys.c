@@ -788,11 +788,7 @@ static struct scp *init_scp(struct platform_device *pdev,
 {
 	struct genpd_onecell_data *pd_data;
 	struct resource *res;
-<<<<<<< HEAD
-	int i, j, count, ret;
-=======
 	int i, j, count;
->>>>>>> c1f078b91efd (Revert "ASoC: mediatek: Check for error clk pointer")
 	struct scp *scp;
 	struct clk *clk[CLK_MAX];
 
