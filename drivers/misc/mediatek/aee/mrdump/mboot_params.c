@@ -3276,16 +3276,16 @@ int aee_rr_reboot_reason_show(struct seq_file *m, void *v)
 		seq_printf(m, "%s, old status is %u.\n", mboot_params_clear ?
 				"Clear" : "Not Clear", old_wdt_status);
 		seq_puts(m, "Only try to dump last_XXX.\n");
-		for (i = 0; i < array_size(aee_rr_last_xxx); i++)
+		for (i = 0; i < array_size_local(aee_rr_last_xxx); i++)
 			aee_rr_last_xxx[i] (m);
 		return 0;
 	}
-	for (i = 0; i < array_size(aee_rr_show); i++)
+	for (i = 0; i < array_size_local(aee_rr_show); i++)
 		aee_rr_show[i] (m);
 
 	for (cpu = 0; cpu < num_possible_cpus(); cpu++) {
 		seq_printf(m, "CPU %d\n", cpu);
-		for (i = 0; i < array_size(aee_rr_show_cpu); i++)
+		for (i = 0; i < array_size_local(aee_rr_show_cpu); i++)
 			aee_rr_show_cpu[i] (m, cpu);
 	}
 	return 0;
