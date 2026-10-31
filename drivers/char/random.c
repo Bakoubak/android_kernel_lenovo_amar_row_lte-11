@@ -453,14 +453,14 @@ static ssize_t get_random_bytes_user(struct iov_iter *iter)
 	 * bytes, in case userspace causes copy_to_user() below to sleep
 	 * forever, so that we still retain forward secrecy in that case.
 	 */
-	crng_make_state(chacha_state, (u8 *)&chacha_state[4], CHACHA20_KEY_SIZE);
+	crng_make_state(chacha_state, (u8 *)&chacha_state[4], CHACHA_KEY_SIZE);
 	/*
 	 * However, if we're doing a read of len <= 32, we don't need to
 	 * use chacha_state after, so we can simply return those bytes to
 	 * the user directly.
 	 */
-	if (iov_iter_count(iter) <= CHACHA20_KEY_SIZE) {
-		ret = copy_to_iter(&chacha_state[4], CHACHA20_KEY_SIZE, iter);
+	if (iov_iter_count(iter) <= CHACHA_KEY_SIZE) {
+		ret = copy_to_iter(&chacha_state[4], CHACHA_KEY_SIZE, iter);
 		goto out_zero_chacha;
 	}
 
@@ -502,9 +502,9 @@ struct batch_ ##type {								\
 	 * remaining 32 bytes from fast key erasure, plus one full		\
 	 * block from the detached ChaCha state. We can increase		\
 	 * the size of this later if needed so long as we keep the		\
-	 * formula of (integer_blocks + 0.5) * CHACHA20_BLOCK_SIZE.		\
+	 * formula of (integer_blocks + 0.5) * CHACHA_BLOCK_SIZE.		\
 	 */									\
-	type entropy[CHACHA20_BLOCK_SIZE * 3 / (2 * sizeof(type))];		\
+	type entropy[CHACHA_BLOCK_SIZE * 3 / (2 * sizeof(type))];		\
 	unsigned long generation;						\
 	unsigned int position;							\
 };										\
