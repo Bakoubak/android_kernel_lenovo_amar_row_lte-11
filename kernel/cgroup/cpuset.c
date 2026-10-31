@@ -831,19 +831,6 @@ done:
 	return ndoms;
 }
 
-static void cpuset_sched_change_begin(void)
-{
-	cpus_read_lock();
-	mutex_lock(&cpuset_mutex);
-}
-
-static void cpuset_sched_change_end(void)
-{
-	mutex_unlock(&cpuset_mutex);
-	cpus_read_unlock();
-}
-
-
 /*
  * Rebuild scheduler domains.
  *
@@ -887,7 +874,7 @@ void rebuild_sched_domains(void)
 {
 	get_online_cpus();
 	mutex_lock(&cpuset_mutex);
-	rebuild_sched_domains_locked();
+	rebuild_sched_domains_cpuslocked();
 	mutex_unlock(&cpuset_mutex);
 	put_online_cpus();
 }
