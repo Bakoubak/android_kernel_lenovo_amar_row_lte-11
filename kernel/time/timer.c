@@ -1428,7 +1428,6 @@ static void call_timer_fn(struct timer_list *timer,
 			  unsigned long baseclk)
 {
 	int count = preempt_count();
-	unsigned long long ts;
 
 #ifdef CONFIG_LOCKDEP
 	/*
