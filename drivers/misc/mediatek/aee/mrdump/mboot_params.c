@@ -3266,7 +3266,7 @@ last_rr_show_t aee_rr_last_xxx[] = {
 	aee_rr_show_suspend_debug_flag
 };
 
-#define array_size(x) (sizeof(x) / sizeof((x)[0]))
+#define array_size_local(x) (sizeof(x) / sizeof((x)[0]))
 int aee_rr_reboot_reason_show(struct seq_file *m, void *v)
 {
 	int i, cpu;
