@@ -614,8 +614,8 @@ static int ext4_has_free_clusters(struct ext4_sb_info *sbi,
 	if (uid_gte(sbi->s_resuid, current_fsuid()) ||
 	/* modified for tune2fs, by liujk2 end */
 	    (!gid_eq(sbi->s_resgid, GLOBAL_ROOT_GID) && in_group_p(sbi->s_resgid)) ||
-	    capable(CAP_SYS_RESOURCE) ||
-	    (flags & EXT4_MB_USE_ROOT_BLOCKS)) {
+	    (flags & EXT4_MB_USE_ROOT_BLOCKS) ||
+	    capable(CAP_SYS_RESOURCE)) {
 
 		if (free_clusters >= (nclusters + dirty_clusters +
 				      resv_clusters))

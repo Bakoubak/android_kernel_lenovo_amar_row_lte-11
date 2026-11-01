@@ -1920,7 +1920,7 @@ static struct ext4_dir_entry_2 *do_split(handle_t *handle, struct inode *dir,
 	 * split it in half by count; each resulting block will have at least
 	 * half the space free.
 	 */
-	if (i > 0)
+	if (i >= 0)
 		split = count - move;
 	else
 		split = count/2;
@@ -2296,7 +2296,7 @@ static int ext4_add_entry(handle_t *handle, struct dentry *dentry,
 		return -EINVAL;
 
 	if (fscrypt_is_nokey_name(dentry))
-			return -ENOKEY;
+		return -ENOKEY;
 
 	#ifdef CONFIG_UNICODE
 		if (sb_has_enc_strict_mode(sb) && IS_CASEFOLDED(dir) &&

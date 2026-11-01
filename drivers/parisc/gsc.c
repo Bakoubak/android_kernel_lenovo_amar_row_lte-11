@@ -158,7 +158,9 @@ static int gsc_set_affinity_irq(struct irq_data *d, const struct cpumask *dest,
 	gsc_dev->eim = ((u32) gsc_dev->gsc_irq.txn_addr) | gsc_dev->gsc_irq.txn_data;
 
 	/* switch IRQ's for devices below LASI/WAX to other CPU */
-	gsc_writel(gsc_dev->eim, gsc_dev->hpa + OFFSET_IAR);
+	/* ASP chip (svers 0x70) does not support reprogramming */
+	if (gsc_dev->gsc->id.sversion != 0x70)
+		gsc_writel(gsc_dev->eim, gsc_dev->hpa + OFFSET_IAR);
 
 	irq_data_update_effective_affinity(d, &tmask);
 
@@ -192,7 +194,7 @@ int gsc_assign_irq(struct irq_chip *type, void *data)
 void gsc_asic_assign_irq(struct gsc_asic *asic, int local_irq, int *irqp)
 {
 	int irq = asic->global_irq[local_irq];
-	
+
 	if (irq <= 0) {
 		irq = gsc_assign_irq(&gsc_asic_interrupt_type, asic);
 		if (irq == NO_IRQ)

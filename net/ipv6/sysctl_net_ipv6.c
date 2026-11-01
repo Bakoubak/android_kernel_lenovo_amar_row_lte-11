@@ -201,7 +201,6 @@ static struct ctl_table ipv6_rotable[] = {
 static struct ctl_table net_table[] = {
 	{
 		.procname = "optr",
-		.data = &sysctl_optr,
 		.maxlen = sizeof(int),
 		.mode = 0664,
 		.proc_handler = proc_dointvec,
