@@ -127,7 +127,7 @@ static bool support_fast_charging(struct mtk_charger *info)
 	}
 	return ret;
 }
-bool is_dock_charger()
+bool is_dock_charger(void)
 {
 	union power_supply_propval reta = {0,};
 	struct power_supply *ext_psy = power_supply_get_by_name("customer");
@@ -355,7 +355,7 @@ done:
 		is_basic = true;
 		info->enable_hv_charging = false;
 	}
-	
+
 	if (dts_bootmode == KERNEL_POWER_OFF_CHARGING_BOOT || dts_bootmode== LOW_POWER_OFF_CHARGING_BOOT) {
 
 		printk("=======leon===========power off charging======\r\n");
@@ -616,6 +616,3 @@ int mtk_basic_charger_init(struct mtk_charger *info)
 	//info->change_current_setting = mtk_basic_charging_current;
 	return 0;
 }
-
-
-

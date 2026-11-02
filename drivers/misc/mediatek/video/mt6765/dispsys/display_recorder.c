@@ -1116,7 +1116,7 @@ void dprec_logger_dump_reset(void)
 		sizeof(dprec_string_buffer_analysize));
 }
 
-char *dprec_logger_get_dump_addr()
+char *dprec_logger_get_dump_addr(void)
 {
 	return dprec_string_buffer_analysize;
 }
@@ -1654,4 +1654,3 @@ int dprec_option_enabled(void)
 {
 	return _control.overall_switch;
 }
-

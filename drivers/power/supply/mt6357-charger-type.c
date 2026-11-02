@@ -528,7 +528,7 @@ static int get_vbus_voltage(struct mtk_charger_type *info,
 	return ret;
 }
 
-bool dock_chargered()
+bool dock_chargered(void)
 {
 	union power_supply_propval reta = {0,};
 	struct power_supply *ext_psy = power_supply_get_by_name("customer");
@@ -676,7 +676,7 @@ int psy_chr_type_set_property(struct power_supply *psy,
     struct charger_device *charger_dev = get_charger_by_name("primary_chg");
 	pr_notice("%s: prop:%d %d\n", __func__, psp, val->intval);
 
-    
+
 	info = (struct mtk_charger_type *)power_supply_get_drvdata(psy);
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
@@ -947,4 +947,3 @@ module_exit(mt6357_charger_type_exit);
 MODULE_AUTHOR("wy.chuang <wy.chuang@mediatek.com>");
 MODULE_DESCRIPTION("MTK Charger Type Detection Driver");
 MODULE_LICENSE("GPL");
-

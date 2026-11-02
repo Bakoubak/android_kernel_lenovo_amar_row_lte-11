@@ -896,7 +896,7 @@ static ssize_t supply_enable_show(struct device *dev,
 }
 static ssize_t supply_enable_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t size)
-{	
+{
 	struct mtk_charger *pinfo = dev->driver_data;
 	int ret = 0;
 	bool value;
@@ -1422,7 +1422,7 @@ stop_charging:
 
 	info->can_charging = charging;
 }
-bool check_dock_charger()
+bool check_dock_charger(void)
 {
 	union power_supply_propval reta = {0,};
 	struct power_supply *ext_psy = power_supply_get_by_name("customer");

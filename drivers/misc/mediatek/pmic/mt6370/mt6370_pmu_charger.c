@@ -1369,7 +1369,7 @@ static int __mt6370_set_mivr(struct mt6370_pmu_charger_data *chg_data, u32 uV)
 {
 	int ret = 0;
 	u8 reg_mivr = 0;
-	
+
 	if(factory_discharge_flag)
 	{
 		printk("===============factory discharing=========set mivr return=====\r\n");
@@ -1938,7 +1938,7 @@ static int mt6370_enable_power_path(struct charger_device *chg_dev, bool en)
 	u32 mivr = en ? chg_data->mivr : MT6370_MIVR_MAX;
 
 	dev_info(chg_data->dev, "%s: en = %d\n", __func__, en);
-	
+
 	if(factory_discharge_flag)
 	{
 		printk("===============factory discharing=========power path return=====\r\n");
@@ -2163,9 +2163,9 @@ static int mt6370_enable_otg(struct charger_device *chg_dev, bool en)
 		}
 		else {
 			mt6370_enable_hz(chg_data, true);
-		}	
+		}
 
-	}	
+	}
 
 	if(en)
 	{
@@ -2279,7 +2279,7 @@ out:
 		}
 		gpio_set_value(pogo2_en,0);
 	}
-	
+
 	return ret;
 }
 
@@ -3894,7 +3894,7 @@ static inline int mt_parse_dt(struct device *dev,
 		gpio_request(vbus_gpio,"vbus-gpio");
 		ret = gpio_direction_output(vbus_gpio,0);
 	}
-	
+
 	pogo2_en = of_get_named_gpio(np, "dock,pogo2_en", 0);
 	if(pogo2_en < 0)
 	{
@@ -3904,7 +3904,7 @@ static inline int mt_parse_dt(struct device *dev,
 	{
 		//gpio_request(pogo2_en,"pogo2_en");
 		ret = gpio_direction_output(pogo2_en,0);
-	}	
+	}
 
 	if (of_property_read_u32(np, "lbp_hys_sel", &chg_desc->lbp_hys_sel) < 0)
 		dev_err(chg_data->dev, "%s: no lbp_hys_sel\n", __func__);
@@ -4137,7 +4137,7 @@ static struct charger_ops mt6370_chg_ops = {
 
 	/* Charger type detection */
 	.enable_chg_type_det = mt6370_enable_chg_type_det,
-	
+
 	.enable_ship_mode = mt6370_enable_ship_mode,
 	/* OTG */
 	.enable_otg = mt6370_enable_otg,
@@ -4513,7 +4513,7 @@ static int mt6370_get_charger_type(struct mt6370_pmu_charger_data *chg_data,
 {
 	union power_supply_propval prop, prop2, prop3;
 	static struct power_supply *chg_psy;
-	int ret = 0;
+	int __maybe_unused ret = 0;
 
 	if (chg_psy == NULL) {
 		if (chg_data->chg_desc->bc12_sel == 1)
