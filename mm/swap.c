@@ -359,6 +359,43 @@ static void __lru_cache_activate_page(struct page *page)
 	put_cpu_var(lru_add_pvec);
 }
 
+#ifdef CONFIG_LRU_GEN
+static void page_inc_refs(struct page *page)
+{
+	unsigned long refs;
+	unsigned long old_flags, new_flags;
+
+	if (PageUnevictable(page))
+		return;
+
+	/* see the comment on MAX_NR_TIERS */
+	do {
+		new_flags = old_flags = READ_ONCE(page->flags);
+
+		if (!(new_flags & BIT(PG_referenced))) {
+			new_flags |= BIT(PG_referenced);
+			continue;
+		}
+
+		if (!(new_flags & BIT(PG_workingset))) {
+			new_flags |= BIT(PG_workingset);
+			continue;
+		}
+
+		refs = new_flags & LRU_REFS_MASK;
+		refs = min(refs + BIT(LRU_REFS_PGOFF), LRU_REFS_MASK);
+
+		new_flags &= ~LRU_REFS_MASK;
+		new_flags |= refs;
+	} while (new_flags != old_flags &&
+		 cmpxchg(&page->flags, old_flags, new_flags) != old_flags);
+}
+#else
+static void page_inc_refs(struct page *page)
+{
+}
+#endif /* CONFIG_LRU_GEN */
+
 /*
  * Mark a page as having seen activity.
  *
@@ -372,6 +409,12 @@ static void __lru_cache_activate_page(struct page *page)
 void mark_page_accessed(struct page *page)
 {
 	page = compound_head(page);
+
+	if (lru_gen_enabled()) {
+		page_inc_refs(page);
+		return;
+	}
+
 	if (!PageActive(page) && !PageUnevictable(page) &&
 			PageReferenced(page)) {
 
@@ -451,14 +494,14 @@ void lru_cache_add(struct page *page)
  * directly back onto it's zone's unevictable list, it does NOT use a
  * per cpu pagevec.
  */
-void __lru_cache_add_active_or_unevictable(struct page *page,
-					   unsigned long vma_flags)
+void __lru_cache_add_active_or_unevictable(struct page *page,unsigned long vma_flags)
 {
 	VM_BUG_ON_PAGE(PageLRU(page), page);
 
-	if (likely((vma_flags & (VM_LOCKED | VM_SPECIAL)) != VM_LOCKED))
-		SetPageActive(page);
-	else if (!TestSetPageMlocked(page)) {
+	if (likely((vma_flags & (VM_LOCKED | VM_SPECIAL)) != VM_LOCKED)) {
+		if (!lru_gen_enabled())
+			SetPageActive(page);
+	} else if (!TestSetPageMlocked(page)) {
 		/*
 		 * We use the irq-unsafe __mod_zone_page_stat because this
 		 * counter is not modified from interrupt context, and the pte
@@ -538,6 +581,21 @@ static void lru_deactivate_file_fn(struct page *page, struct lruvec *lruvec,
 	update_page_reclaim_stat(lruvec, file, 0);
 }
 
+static void lru_deactivate_fn(struct page *page, struct lruvec *lruvec,
+			    void *arg)
+{
+	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
+		int file = page_is_file_cache(page);
+
+		del_page_from_lru_list(page, lruvec, page_lru(page));
+		ClearPageActive(page);
+		ClearPageReferenced(page);
+		add_page_to_lru_list(page, lruvec, page_lru(page));
+
+		__count_vm_events(PGDEACTIVATE, hpage_nr_pages(page));
+		update_page_reclaim_stat(lruvec, file, 0);
+	}
+}
 
 static void lru_lazyfree_fn(struct page *page, struct lruvec *lruvec,
 			    void *arg)
