@@ -8,7 +8,6 @@
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
 #include <linux/mm.h>
-#include <linux/mm_inline.h>
 #include <linux/gfp.h>
 #include <linux/kernel_stat.h>
 #include <linux/swap.h>
@@ -204,7 +203,7 @@ void __delete_from_swap_cache(struct page *page)
  * @page: page we want to move to swap
  *
  * Allocate swap space for the page and add the page to the
- * swap cache.  Caller needs to hold the page lock.
+ * swap cache.  Caller needs to hold the page lock. 
  */
 int add_to_swap(struct page *page)
 {
@@ -279,9 +278,9 @@ void delete_from_swap_cache(struct page *page)
 	page_ref_sub(page, hpage_nr_pages(page));
 }
 
-/*
- * If we are the only user, then try to free up the swap cache.
- *
+/* 
+ * If we are the only user, then try to free up the swap cache. 
+ * 
  * Its ok to check for PageSwapCache without the page lock
  * here because we are going to recheck again inside
  * try_to_free_swap() _with_ the lock.
@@ -295,7 +294,7 @@ static inline void free_swap_cache(struct page *page)
 	}
 }
 
-/*
+/* 
  * Perform a free_page(), also freeing any swap cache associated with
  * this page if it is the last user of the page.
  */
@@ -388,8 +387,6 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
 	struct page *found_page, *new_page = NULL;
 	struct address_space *swapper_space = swap_address_space(entry);
 	int err;
-	void *shadow;
-
 	*new_page_allocated = false;
 
 	do {
@@ -457,10 +454,7 @@ struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
 			/*
 			 * Initiate read into locked page and return.
 			 */
-			if (!lru_gen_enabled())
-				SetPageWorkingset(new_page);
-			else if (shadow)
-				lru_gen_refault(new_page, shadow);
+			SetPageWorkingset(new_page);
 			lru_cache_add_anon(new_page);
 			*new_page_allocated = true;
 			return new_page;
