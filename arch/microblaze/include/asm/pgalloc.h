@@ -19,7 +19,7 @@
 #include <asm/io.h>
 #include <asm/page.h>
 #include <asm/cache.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #define PGDIR_ORDER	0
 

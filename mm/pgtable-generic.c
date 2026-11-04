@@ -2,15 +2,14 @@
 /*
  *  mm/pgtable-generic.c
  *
- *  Generic pgtable methods declared in linux/pgtable.h
+ *  Generic pgtable methods declared in asm-generic/pgtable.h
  *
  *  Copyright (C) 2010  Linus Torvalds
  */
 
 #include <linux/pagemap.h>
-#include <linux/hugetlb.h>
-#include <linux/pgtable.h>
 #include <asm/tlb.h>
+#include <asm-generic/pgtable.h>
 
 /*
  * If a p?d_bad entry is found while walking page tables, report

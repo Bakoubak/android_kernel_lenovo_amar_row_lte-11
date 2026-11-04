@@ -31,7 +31,7 @@
 #include <asm/tlbflush.h>
 #include <asm/page.h>
 #include <asm/pgalloc.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 /* 
  * Note:

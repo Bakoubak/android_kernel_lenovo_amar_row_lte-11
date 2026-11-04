@@ -395,6 +395,7 @@ void update_mmu_cache(struct vm_area_struct *vma, unsigned long address,
 #include <asm/hugepage.h>
 #endif
 
+#include <asm-generic/pgtable.h>
 
 /* to cope with aliasing VIPT cache */
 #define HAVE_ARCH_UNMAPPED_AREA

@@ -32,7 +32,7 @@
 #include <asm/thread_info.h>
 #include <asm/segment.h>
 #include <asm/page.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 /*
  * Copy the thread state to a regset that can be interpreted by userspace.

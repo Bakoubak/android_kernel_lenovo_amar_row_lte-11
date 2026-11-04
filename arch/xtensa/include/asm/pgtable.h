@@ -449,5 +449,6 @@ typedef pte_t *pte_addr_t;
  */
 #define HAVE_ARCH_UNMAPPED_AREA
 
+#include <asm-generic/pgtable.h>
 
 #endif /* _XTENSA_PGTABLE_H */

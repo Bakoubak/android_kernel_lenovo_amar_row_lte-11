@@ -56,7 +56,7 @@
 
 #include <asm/bootinfo.h>
 #include <asm/bitops.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/io.h>
 #include <asm/dma.h>
 

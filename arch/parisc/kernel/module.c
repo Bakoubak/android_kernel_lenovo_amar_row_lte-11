@@ -64,7 +64,7 @@
 #include <linux/mm.h>
 #include <linux/slab.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/unwind.h>
 #include <asm/sections.h>
 

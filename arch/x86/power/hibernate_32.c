@@ -11,7 +11,7 @@
 #include <linux/bootmem.h>
 
 #include <asm/page.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/mmzone.h>
 #include <asm/sections.h>
 

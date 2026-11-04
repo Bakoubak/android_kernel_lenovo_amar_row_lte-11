@@ -27,7 +27,7 @@
 
 #include <asm/mach-types.h>
 #include <asm/mach/time.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #include "hardware.h"
 #include "cm.h"

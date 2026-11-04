@@ -48,6 +48,7 @@ extern void paging_init(void);
  */
 #define kern_addr_valid(addr)	(1)
 
+#include <asm-generic/pgtable.h>
 
 
 /*

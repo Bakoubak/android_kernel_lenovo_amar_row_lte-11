@@ -19,7 +19,7 @@
 #include <asm/smp_plat.h>
 #include <asm/prom.h>
 #include <asm/tlbflush.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #include "keystone.h"
 

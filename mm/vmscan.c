@@ -2859,46 +2859,60 @@ static void get_item_key(void *item, int *key)
 {
     u32 hash = hash_ptr(item, BLOOM_FILTER_SHIFT * 2);
 
-	BUILD_BUG_ON(BLOOM_FILTER_SHIFT * 2 > BITS_PER_TYPE(u32));
+    BUILD_BUG_ON(BLOOM_FILTER_SHIFT * 2 > BITS_PER_TYPE(u32));
 
-   #ifdef CONFIG_MTK_GMO_RAM_OPTIMIZE
-	/*
-	 * sc->priority: 12, 11, 10,  9
-	 * (4)    shift:  4,  3,  2,  1
-	 *           nr:  2,  4,  8, 16
-	 * (5)    shift:  5,  4,  3,  2
-	 *           nr:  1,  2,  4,  8
-	 * (3)    shift:  3,  2,  1,  0
-	 *           nr:  4,  8, 16, 32
-	 */
-	if (swap_is_allowed() && sc->priority > 8 &&
-			nr[LRU_INACTIVE_ANON] == 0) {
-		int shift = scan_anon_priority - DEF_PRIORITY + sc->priority;
+    key[0] = hash & (BIT(BLOOM_FILTER_SHIFT) - 1);
+    key[1] = hash >> BLOOM_FILTER_SHIFT;
+}
 
-		if (shift >= 0)
-			nr[LRU_INACTIVE_ANON] = SWAP_CLUSTER_MAX >> shift;
-		else
-			nr[LRU_INACTIVE_ANON] = 1;
+static void reset_bloom_filter(struct lruvec *lruvec, unsigned long seq)
+{
+    unsigned long *filter;
+    int gen = filter_gen_from_seq(seq);
 
-		nr[LRU_ACTIVE_ANON] = nr[LRU_INACTIVE_ANON];
-	}
+    lockdep_assert_held(&get_mm_list(lruvec_memcg(lruvec))->lock);
 
-   #endif
+    filter = lruvec->mm_state.filters[gen];
+    if (filter) {
+        bitmap_clear(filter, 0, BIT(BLOOM_FILTER_SHIFT));
+        return;
+    }
 
-	/*
-	 * Global reclaiming within direct reclaim at DEF_PRIORITY is a normal
-	 * event that can occur when there is little memory pressure e.g.
-	 * multiple streaming readers/writers. Hence, we do not abort scanning
-	 * when the requested number of pages are reclaimed when scanning at
-	 * DEF_PRIORITY on the assumption that the fact we are direct
-	 * reclaiming implies that kswapd is not keeping up and it is best to
-	 * do a batch of work at once. For memcg reclaim one check is made to
-	 * abort proportional reclaim if either the file or anon lru has already
-	 * dropped to zero at the first pass.
-	 */
+    filter = bitmap_zalloc(BIT(BLOOM_FILTER_SHIFT), GFP_ATOMIC);
+    WRITE_ONCE(lruvec->mm_state.filters[gen], filter);
+}
 
-	key[0] = hash & (BIT(BLOOM_FILTER_SHIFT) - 1);
-	key[1] = hash >> BLOOM_FILTER_SHIFT;
+static void update_bloom_filter(struct lruvec *lruvec, unsigned long seq, void *item)
+{
+    int key[2];
+    unsigned long *filter;
+    int gen = filter_gen_from_seq(seq);
+
+    filter = READ_ONCE(lruvec->mm_state.filters[gen]);
+    if (!filter)
+        return;
+
+    get_item_key(item, key);
+
+    if (!test_bit(key[0], filter))
+        set_bit(key[0], filter);
+    if (!test_bit(key[1], filter))
+        set_bit(key[1], filter);
+}
+
+static bool test_bloom_filter(struct lruvec *lruvec, unsigned long seq, void *item)
+{
+    int key[2];
+    unsigned long *filter;
+    int gen = filter_gen_from_seq(seq);
+
+    filter = READ_ONCE(lruvec->mm_state.filters[gen]);
+    if (!filter)
+        return true;
+
+    get_item_key(item, key);
+
+    return test_bit(key[0], filter) && test_bit(key[1], filter);
 }
 
 static void reset_mm_stats(struct lruvec *lruvec, struct lru_gen_mm_walk *walk, bool last)
@@ -2977,6 +2991,58 @@ static bool should_skip_mm(struct mm_struct *mm, struct lru_gen_mm_walk *walk)
  */
 #define BLOOM_FILTER_SHIFT	15
 
+static inline int filter_gen_from_seq(unsigned long seq)
+{
+	return seq % NR_BLOOM_FILTERS;
+}
+
+static void get_item_key(void *item, int *key)
+{
+	u32 hash = hash_ptr(item, BLOOM_FILTER_SHIFT * 2);
+
+	BUILD_BUG_ON(BLOOM_FILTER_SHIFT * 2 > BITS_PER_TYPE(u32));
+
+#ifdef CONFIG_MTK_GMO_RAM_OPTIMIZE
+	/*
+	 * sc->priority: 12, 11, 10,  9
+	 * (4)    shift:  4,  3,  2,  1
+	 *           nr:  2,  4,  8, 16
+	 * (5)    shift:  5,  4,  3,  2
+	 *           nr:  1,  2,  4,  8
+	 * (3)    shift:  3,  2,  1,  0
+	 *           nr:  4,  8, 16, 32
+	 */
+	if (swap_is_allowed() && sc->priority > 8 &&
+			nr[LRU_INACTIVE_ANON] == 0) {
+		int shift = scan_anon_priority - DEF_PRIORITY + sc->priority;
+
+		if (shift >= 0)
+			nr[LRU_INACTIVE_ANON] = SWAP_CLUSTER_MAX >> shift;
+		else
+			nr[LRU_INACTIVE_ANON] = 1;
+
+		nr[LRU_ACTIVE_ANON] = nr[LRU_INACTIVE_ANON];
+	}
+
+#endif
+
+	/*
+	 * Global reclaiming within direct reclaim at DEF_PRIORITY is a normal
+	 * event that can occur when there is little memory pressure e.g.
+	 * multiple streaming readers/writers. Hence, we do not abort scanning
+	 * when the requested number of pages are reclaimed when scanning at
+	 * DEF_PRIORITY on the assumption that the fact we are direct
+	 * reclaiming implies that kswapd is not keeping up and it is best to
+	 * do a batch of work at once. For memcg reclaim one check is made to
+	 * abort proportional reclaim if either the file or anon lru has already
+	 * dropped to zero at the first pass.
+	 */
+	scan_adjusted = (global_reclaim(sc) && !current_is_kswapd() &&
+			 sc->priority == DEF_PRIORITY);
+	key[0] = hash & (BIT(BLOOM_FILTER_SHIFT) - 1);
+	key[1] = hash >> BLOOM_FILTER_SHIFT;
+}
+
 static void reset_bloom_filter(struct lruvec *lruvec, unsigned long seq)
 {
 	unsigned long *filter;
@@ -3025,6 +3091,58 @@ static bool test_bloom_filter(struct lruvec *lruvec, unsigned long seq, void *it
 	get_item_key(item, key);
 
 	return test_bit(key[0], filter) && test_bit(key[1], filter);
+}
+
+static void reset_mm_stats(struct lruvec *lruvec, struct lru_gen_mm_walk *walk, bool last)
+{
+	int i;
+	int hist;
+
+	lockdep_assert_held(&get_mm_list(lruvec_memcg(lruvec))->lock);
+
+	if (walk) {
+		hist = lru_hist_from_seq(walk->max_seq);
+
+		for (i = 0; i < NR_MM_STATS; i++) {
+			WRITE_ONCE(lruvec->mm_state.stats[hist][i],
+				   lruvec->mm_state.stats[hist][i] + walk->mm_stats[i]);
+			walk->mm_stats[i] = 0;
+		}
+	}
+
+	if (NR_HIST_GENS > 1 && last) {
+		hist = lru_hist_from_seq(lruvec->mm_state.seq + 1);
+
+		for (i = 0; i < NR_MM_STATS; i++)
+			WRITE_ONCE(lruvec->mm_state.stats[hist][i], 0);
+	}
+}
+
+static bool should_skip_mm(struct mm_struct *mm, struct lru_gen_mm_walk *walk)
+{
+	int type;
+	unsigned long size = 0;
+	struct pglist_data *pgdat = lruvec_pgdat(walk->lruvec);
+
+	if (!walk->full_scan && cpumask_empty(mm_cpumask(mm)) &&
+	    !node_isset(pgdat->node_id, mm->lru_gen.nodes))
+		return true;
+
+	node_clear(pgdat->node_id, mm->lru_gen.nodes);
+
+	for (type = !walk->can_swap; type < ANON_AND_FILE; type++) {
+		size += type ? get_mm_counter(mm, MM_FILEPAGES) :
+			       get_mm_counter(mm, MM_ANONPAGES) +
+			       get_mm_counter(mm, MM_SHMEMPAGES);
+	}
+
+	if (size < MIN_LRU_BATCH)
+		return true;
+
+	if (mm_is_oom_victim(mm))
+		return true;
+
+	return !mmget_not_zero(mm);
 }
 
 static bool iterate_mm_list(struct lruvec *lruvec, struct lru_gen_mm_walk *walk,
@@ -4241,7 +4359,7 @@ static bool sort_page(struct lruvec *lruvec, struct page *page, int tier_idx)
 		success = lru_gen_del_page(lruvec, page, true);
 		VM_BUG_ON_PAGE(!success, page);
 		SetPageUnevictable(page);
-		add_page_to_lru_list(page, lruvec, page_lru(page));
+		add_page_to_lru_list(page, lruvec, );
 		__count_vm_events(UNEVICTABLE_PGCULLED, delta);
 		return true;
 	}
@@ -4250,7 +4368,7 @@ static bool sort_page(struct lruvec *lruvec, struct page *page, int tier_idx)
 		success = lru_gen_del_page(lruvec, page, true);
 		VM_BUG_ON_PAGE(!success, page);
 		SetPageSwapBacked(page);
-		add_page_to_lru_list_tail(page, lruvec, page_lru(page));
+		add_page_to_lru_list_tail(page, lruvec);
 		return true;
 	}
 
@@ -4693,7 +4811,7 @@ static bool fill_evictable(struct lruvec *lruvec)
 
 			prefetchw_prev_lru_page(page, head, flags);
 
-			del_page_from_lru_list(page, lruvec, page_lru(page));
+			del_page_from_lru_list(page, lruvec);
 			success = lru_gen_add_page(lruvec, page, false);
 			VM_BUG_ON(!success);
 
@@ -4727,7 +4845,7 @@ static bool drain_evictable(struct lruvec *lruvec)
 
 			success = lru_gen_del_page(lruvec, page, false);
 			VM_BUG_ON(!success);
-			add_page_to_lru_list(page, lruvec, page_lru(page));
+			add_page_to_lru_list(page, lruvec);
 
 			if (!--remaining)
 				return false;

@@ -39,7 +39,7 @@
 #include <sound/info.h>
 #include <sound/initval.h>
 /* for 440MX workaround */
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #ifdef CONFIG_X86
 #include <asm/set_memory.h>
 #endif

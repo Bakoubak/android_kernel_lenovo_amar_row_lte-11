@@ -26,7 +26,7 @@
 #include <linux/audit.h>
 
 #include <linux/uaccess.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/processor.h>
 #include <asm/asm-offsets.h>
 

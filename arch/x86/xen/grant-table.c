@@ -44,7 +44,7 @@
 #include <xen/grant_table.h>
 #include <xen/xen.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 static struct gnttab_vm_area {
 	struct vm_struct *area;

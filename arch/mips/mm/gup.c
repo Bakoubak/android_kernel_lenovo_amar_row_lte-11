@@ -14,7 +14,7 @@
 #include <linux/hugetlb.h>
 
 #include <asm/cpu-features.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 static inline pte_t gup_get_pte(pte_t *ptep)
 {

@@ -19,7 +19,7 @@
 #include <linux/string_helpers.h>
 #include <linux/stop_machine.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/pgalloc.h>
 #include <asm/mmu_context.h>
 #include <asm/dma.h>

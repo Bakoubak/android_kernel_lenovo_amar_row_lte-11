@@ -57,7 +57,7 @@
 #include <asm/processor.h>
 #include <asm/ioctl.h>
 #include <linux/uaccess.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #include "coalesced_mmio.h"
 #include "async_pf.h"

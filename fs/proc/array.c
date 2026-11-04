@@ -92,7 +92,7 @@
 #include <linux/user_namespace.h>
 #include <linux/fs_struct.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/processor.h>
 #include "internal.h"
 

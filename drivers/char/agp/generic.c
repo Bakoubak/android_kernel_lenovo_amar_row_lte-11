@@ -42,7 +42,7 @@
 #ifdef CONFIG_X86
 #include <asm/set_memory.h>
 #endif
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include "agp.h"
 
 __u32 *agp_gatt_table;

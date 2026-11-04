@@ -445,6 +445,7 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
 
 #define kern_addr_valid(addr)           (1)
 
+#include <asm-generic/pgtable.h>
 
 /*
  * No page table caches to initialise

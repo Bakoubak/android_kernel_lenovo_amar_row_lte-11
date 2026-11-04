@@ -30,7 +30,7 @@
 #include <linux/list.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/io.h>
 
 /*

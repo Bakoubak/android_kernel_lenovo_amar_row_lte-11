@@ -19,7 +19,7 @@
 #include <linux/audit.h>
 
 #include <linux/uaccess.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/fpu.h>
 
 #include "proto.h"

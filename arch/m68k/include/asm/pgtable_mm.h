@@ -170,6 +170,7 @@ static inline void update_mmu_cache(struct vm_area_struct *vma,
 	    : (prot)))
 
 #endif /* CONFIG_COLDFIRE */
+#include <asm-generic/pgtable.h>
 #endif /* !__ASSEMBLY__ */
 
 /*

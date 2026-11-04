@@ -28,7 +28,7 @@
 #include <linux/init.h>
 
 #include <asm/io.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/irq.h>
 #include <asm/prom.h>
 #include <asm/machdep.h>

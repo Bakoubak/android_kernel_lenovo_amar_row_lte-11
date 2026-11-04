@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PGTABLE_H
-#define _LINUX_PGTABLE_H
+#ifndef _ASM_GENERIC_PGTABLE_H
+#define _ASM_GENERIC_PGTABLE_H
 
 #include <linux/pfn.h>
-#include <asm/pgtable.h>
 
 #ifndef __ASSEMBLY__
 #ifdef CONFIG_MMU
@@ -120,21 +119,6 @@ static inline int pmdp_clear_flush_young(struct vm_area_struct *vma,
 	return 0;
 }
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE */
-#endif
-
-#ifndef arch_has_hw_pte_young
-
-/*
- * Return whether the accessed bit is supported on the local CPU.
- *
- * This stub assumes accessing through an old PTE triggers a page fault.
- * Architectures that automatically set the access bit should overwrite it.
- */
-static inline bool arch_has_hw_pte_young(void)
-{
-	return false;
-}
-
 #endif
 
 #ifndef __HAVE_ARCH_PTEP_GET_AND_CLEAR
@@ -1168,4 +1152,4 @@ static inline bool arch_has_pfn_modify_check(void)
 #define mm_pmd_folded(mm)	__is_defined(__PAGETABLE_PMD_FOLDED)
 #endif
 
-#endif /* _LINUX_PGTABLE_H */
+#endif /* _ASM_GENERIC_PGTABLE_H */

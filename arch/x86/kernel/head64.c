@@ -26,7 +26,7 @@
 #include <asm/smp.h>
 #include <asm/setup.h>
 #include <asm/desc.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/tlbflush.h>
 #include <asm/sections.h>
 #include <asm/kdebug.h>

@@ -34,7 +34,7 @@
 #include <linux/spinlock.h>
 #include <linux/slab.h>
 #include <asm/page.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/8xx_immap.h>
 #include <asm/cpm1.h>
 #include <asm/io.h>

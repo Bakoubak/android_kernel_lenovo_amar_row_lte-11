@@ -3,7 +3,7 @@
 #define __ASM_IDMAP_H
 
 #include <linux/compiler.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 /* Tag a function as requiring to be executed via an identity mapping. */
 #define __idmap __section(.idmap.text) noinline notrace

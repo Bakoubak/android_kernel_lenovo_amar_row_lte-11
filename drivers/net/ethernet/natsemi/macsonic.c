@@ -52,7 +52,7 @@
 #include <linux/bitrev.h>
 #include <linux/slab.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/io.h>
 #include <asm/hwtest.h>
 #include <asm/dma.h>

@@ -7,7 +7,7 @@
  */
 
 #include <asm/debugfs.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/cpu_has_feature.h>
 
 static char *pp_601(int k, int pp)

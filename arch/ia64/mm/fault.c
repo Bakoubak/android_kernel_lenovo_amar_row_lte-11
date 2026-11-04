@@ -15,7 +15,7 @@
 #include <linux/prefetch.h>
 #include <linux/uaccess.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/processor.h>
 #include <asm/exception.h>
 

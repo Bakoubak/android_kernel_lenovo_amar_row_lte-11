@@ -23,7 +23,7 @@
 
 #include <linux/string.h>
 #include <asm/pgalloc.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 static void pgd_ctor(void *addr)
 {

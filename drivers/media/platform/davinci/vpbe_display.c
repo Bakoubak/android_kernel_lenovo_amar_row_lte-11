@@ -25,7 +25,7 @@
 #include <linux/videodev2.h>
 #include <linux/slab.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #ifdef CONFIG_ARCH_DAVINCI
 #include <mach/cputype.h>

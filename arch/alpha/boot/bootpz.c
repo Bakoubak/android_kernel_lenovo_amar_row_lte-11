@@ -18,7 +18,7 @@
 
 #include <asm/console.h>
 #include <asm/hwrpb.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #include <asm/io.h>
 
 #include <stdarg.h>

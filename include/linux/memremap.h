@@ -4,7 +4,7 @@
 #include <linux/ioport.h>
 #include <linux/percpu-refcount.h>
 
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 struct resource;
 struct device;

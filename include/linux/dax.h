@@ -5,7 +5,7 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/radix-tree.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 struct iomap_ops;
 struct dax_device;

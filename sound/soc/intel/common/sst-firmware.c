@@ -30,7 +30,7 @@
 #include <linux/dma/dw.h>
 
 #include <asm/page.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #include "sst-dsp.h"
 #include "sst-dsp-priv.h"

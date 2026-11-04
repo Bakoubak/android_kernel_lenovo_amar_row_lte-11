@@ -14,7 +14,7 @@
 #ifdef __KERNEL__
 
 #ifndef __powerpc64__
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 #endif
 #include <asm/pgalloc.h>
 #ifndef __powerpc64__

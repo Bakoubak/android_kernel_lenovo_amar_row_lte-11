@@ -30,7 +30,7 @@
 #include <linux/interrupt.h>
 #include <linux/videodev2.h>
 #include <asm/page.h>
-#include <linux/pgtable.h>
+#include <asm/pgtable.h>
 
 #include "btcx-risc.h"
 
