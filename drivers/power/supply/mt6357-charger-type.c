@@ -631,7 +631,9 @@ static int psy_chr_type_get_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
-		if (info->type == POWER_SUPPLY_USB_TYPE_UNKNOWN)
+		get_vbus_voltage(info, &vbus);
+
+		if (vbus < 2500 || info->type == POWER_SUPPLY_USB_TYPE_UNKNOWN)
 			val->intval = 0;
 		else
 			val->intval = 1;
@@ -740,13 +742,17 @@ static int mt_usb_get_property(struct power_supply *psy,
 	enum power_supply_property psp, union power_supply_propval *val)
 {
 	struct mtk_charger_type *info;
+	int vbus = 0;
 
 	info = (struct mtk_charger_type *)power_supply_get_drvdata(psy);
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
-		if ((info->type == POWER_SUPPLY_USB_TYPE_SDP) ||
-			(info->type == POWER_SUPPLY_USB_TYPE_CDP))
+		get_vbus_voltage(info, &vbus);
+
+		if (vbus >= 2500 &&
+		    ((info->type == POWER_SUPPLY_USB_TYPE_SDP) ||
+		     (info->type == POWER_SUPPLY_USB_TYPE_CDP)))
 			val->intval = 1;
 		else
 			val->intval = 0;
