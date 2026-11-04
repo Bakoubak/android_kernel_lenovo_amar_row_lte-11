@@ -23,6 +23,44 @@ static inline int page_is_file_cache(struct page *page)
 	return !PageSwapBacked(page);
 }
 
+/**
+ * page_lru_base_type - which LRU list type should a page be on?
+ * @page: the page to test
+ *
+ * Used for LRU list index arithmetic.
+ *
+ * Returns the base LRU type - file or anon - @page should be on.
+ */
+static inline enum lru_list page_lru_base_type(struct page *page)
+{
+	if (page_is_file_cache(page))
+		return LRU_INACTIVE_FILE;
+	return LRU_INACTIVE_ANON;
+}
+
+/**
+ * page_lru - which LRU list should a page be on?
+ * @page: the page to test
+ *
+ * Returns the LRU list a page should be on, as an index
+ * into the array of LRU lists.
+ */
+static __always_inline enum lru_list page_lru(struct page *page)
+{
+	enum lru_list lru;
+
+	VM_BUG_ON_PAGE(PageActive(page) && PageUnevictable(page), page);
+
+	if (PageUnevictable(page))
+		lru = LRU_UNEVICTABLE;
+	else {
+		lru = page_lru_base_type(page);
+		if (PageActive(page))
+			lru += LRU_ACTIVE;
+	}
+	return lru;
+}
+
 static __always_inline void __update_lru_size(struct lruvec *lruvec,
 				enum lru_list lru, enum zone_type zid,
 				int nr_pages)
@@ -71,21 +109,6 @@ static __always_inline void del_page_from_lru_list(struct page *page,
 }
 
 /**
- * page_lru_base_type - which LRU list type should a page be on?
- * @page: the page to test
- *
- * Used for LRU list index arithmetic.
- *
- * Returns the base LRU type - file or anon - @page should be on.
- */
-static inline enum lru_list page_lru_base_type(struct page *page)
-{
-	if (page_is_file_cache(page))
-		return LRU_INACTIVE_FILE;
-	return LRU_INACTIVE_ANON;
-}
-
-/**
  * __clear_page_lru_flags - clear page lru flags before releasing a page
  * @page: the page that was on lru and now has a zero reference
  */
@@ -101,29 +124,6 @@ static __always_inline void __clear_page_lru_flags(struct page *page)
 
 	__ClearPageActive(page);
 	__ClearPageUnevictable(page);
-}
-
-/**
- * page_lru - which LRU list should a page be on?
- * @page: the page to test
- *
- * Returns the LRU list a page should be on, as an index
- * into the array of LRU lists.
- */
-static __always_inline enum lru_list page_lru(struct page *page)
-{
-	enum lru_list lru;
-
-	VM_BUG_ON_PAGE(PageActive(page) && PageUnevictable(page), page);
-
-	if (PageUnevictable(page))
-		lru = LRU_UNEVICTABLE;
-	else {
-		lru = page_lru_base_type(page);
-		if (PageActive(page))
-			lru += LRU_ACTIVE;
-	}
-	return lru;
 }
 
 #define lru_to_page(head) (list_entry((head)->prev, struct page, lru))
