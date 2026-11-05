@@ -243,8 +243,6 @@ int f2fs_ra_meta_pages(struct f2fs_sb_info *sbi, block_t start, int nrpages,
 					blkno * NAT_ENTRY_PER_BLOCK);
 			break;
 		case META_SIT:
-			if (unlikely(blkno >= TOTAL_SEGS(sbi)))
-				goto out;
 			/* get sit block addr */
 			fio.new_blkaddr = current_sit_addr(sbi,
 					blkno * SIT_ENTRY_PER_BLOCK);
@@ -301,15 +299,8 @@ static int __f2fs_write_meta_page(struct page *page,
 
 	trace_f2fs_writepage(page, META);
 
-	if (unlikely(f2fs_cp_error(sbi))) {
-		if (is_sbi_flag_set(sbi, SBI_IS_CLOSE)) {
-			ClearPageUptodate(page);
-			dec_page_count(sbi, F2FS_DIRTY_META);
-			unlock_page(page);
-			return 0;
-		}
+	if (unlikely(f2fs_cp_error(sbi)))
 		goto redirty_out;
-	}
 	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
 		goto redirty_out;
 	if (wbc->for_reclaim && page->index < GET_SUM_BLOCK(sbi, 0))
@@ -715,7 +706,6 @@ int f2fs_recover_orphan_inodes(struct f2fs_sb_info *sbi)
 	for (i = 0; i < orphan_blocks; i++) {
 		struct page *page;
 		struct f2fs_orphan_block *orphan_blk;
-		unsigned int entry_count;
 
 		page = f2fs_get_meta_page(sbi, start_blk + i);
 		if (IS_ERR(page)) {
@@ -724,16 +714,7 @@ int f2fs_recover_orphan_inodes(struct f2fs_sb_info *sbi)
 		}
 
 		orphan_blk = (struct f2fs_orphan_block *)page_address(page);
-		entry_count = le32_to_cpu(orphan_blk->entry_count);
-		if (entry_count > F2FS_ORPHANS_PER_BLOCK) {
-			f2fs_err(sbi, "invalid orphan inode entry count %u", entry_count);
-			set_sbi_flag(sbi, SBI_NEED_FSCK);
-			err = -EFSCORRUPTED;
-			f2fs_put_page(page, 1);
-			goto out;
-		}
-
-		for (j = 0; j < entry_count; j++) {
+		for (j = 0; j < le32_to_cpu(orphan_blk->entry_count); j++) {
 			nid_t ino = le32_to_cpu(orphan_blk->ino[j]);
 			err = recover_orphan_inode(sbi, ino);
 			if (err) {
@@ -1066,12 +1047,8 @@ int f2fs_sync_dirty_inodes(struct f2fs_sb_info *sbi, enum inode_type type)
 				get_pages(sbi, is_dir ?
 				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
 retry:
-	if (unlikely(f2fs_cp_error(sbi))) {
-		trace_f2fs_sync_dirty_inodes_exit(sbi->sb, is_dir,
-				get_pages(sbi, is_dir ?
-				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
+	if (unlikely(f2fs_cp_error(sbi)))
 		return -EIO;
-	}
 
 	spin_lock(&sbi->inode_lock[type]);
 
@@ -1286,8 +1263,7 @@ void f2fs_wait_on_all_pages(struct f2fs_sb_info *sbi, int type)
 		if (!get_pages(sbi, type))
 			break;
 
-		if (unlikely(f2fs_cp_error(sbi) &&
-			!is_sbi_flag_set(sbi, SBI_IS_CLOSE)))
+		if (unlikely(f2fs_cp_error(sbi)))
 			break;
 
 		if (type == F2FS_DIRTY_META)
