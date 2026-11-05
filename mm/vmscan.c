@@ -3008,7 +3008,7 @@ static bool iterate_mm_list(struct lruvec *lruvec, struct lru_gen_mm_walk *walk,
  		mm_state->head = &mm_list->fifo;
 
 		if (mm_state->head == &mm_list->fifo)
-		first = true;
+		    first = true;
 
 	do {
 		mm_state->head = mm_state->head->next;
@@ -3853,7 +3853,7 @@ static bool try_to_inc_max_seq(struct lruvec *lruvec, unsigned long max_seq,
 	free_mm_walk(walk);
 done:
 	if (success)
- 		inc_max_seq(lruvec, can_swap, full_scan);
+ 		inc_max_seq(lruvec);
 
 	return success;
 }
