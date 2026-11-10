@@ -566,14 +566,14 @@ static int finish_preallocate_blocks(struct inode *inode)
 		return 0;
 	}
 
-	f2fs_down_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+	down_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
 	down_write(&inode->i_mapping->invalidate_lock);
 
 	truncate_setsize(inode, i_size_read(inode));
 	ret = f2fs_truncate(inode);
 
 	up_write(&inode->i_mapping->invalidate_lock);
-	f2fs_up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+	up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
 
 	if (!ret)
 		set_inode_flag(inode, FI_OPENED_FILE);
