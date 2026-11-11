@@ -418,6 +418,7 @@ size_t zstd_find_frame_compressed_size(const void *src, size_t src_size);
 
 
 size_t ZSTD_DStreamInSize(void);
+
 /**
  * ZSTD_DStreamOutSize() - recommended size for the output buffer
  *
@@ -427,49 +428,6 @@ size_t ZSTD_DStreamInSize(void);
  * Return: The recommended size for the output buffer.
  */
 size_t ZSTD_DStreamOutSize(void);
-
-
-/* --- Constants ---*/
-#define ZSTD_MAGICNUMBER            0xFD2FB528   /* >= v0.8.0 */
-#define ZSTD_MAGIC_SKIPPABLE_START  0x184D2A50U
-
-#define ZSTD_CONTENTSIZE_UNKNOWN (0ULL - 1)
-#define ZSTD_CONTENTSIZE_ERROR   (0ULL - 2)
-
-#define ZSTD_WINDOWLOG_MAX_32  27
-#define ZSTD_WINDOWLOG_MAX_64  27
-#define ZSTD_WINDOWLOG_MAX \
-	((unsigned int)(sizeof(size_t) == 4 \
-		? ZSTD_WINDOWLOG_MAX_32 \
-		: ZSTD_WINDOWLOG_MAX_64))
-#define ZSTD_WINDOWLOG_MIN 10
-#define ZSTD_HASHLOG_MAX ZSTD_WINDOWLOG_MAX
-#define ZSTD_HASHLOG_MIN        6
-#define ZSTD_CHAINLOG_MAX     (ZSTD_WINDOWLOG_MAX+1)
-#define ZSTD_CHAINLOG_MIN      ZSTD_HASHLOG_MIN
-#define ZSTD_HASHLOG3_MAX      17
-#define ZSTD_SEARCHLOG_MAX    (ZSTD_WINDOWLOG_MAX-1)
-#define ZSTD_SEARCHLOG_MIN      1
-/* only for ZSTD_fast, other strategies are limited to 6 */
-#define ZSTD_SEARCHLENGTH_MAX   7
-/* only for ZSTD_btopt, other strategies are limited to 4 */
-#define ZSTD_SEARCHLENGTH_MIN   3
-#define ZSTD_TARGETLENGTH_MIN   4
-#define ZSTD_TARGETLENGTH_MAX 999
-
-/* for static allocation */
-#define ZSTD_FRAMEHEADERSIZE_MAX 18
-#define ZSTD_FRAMEHEADERSIZE_MIN  6
-static const size_t ZSTD_frameHeaderSize_prefix = 5;
-static const size_t ZSTD_frameHeaderSize_min = ZSTD_FRAMEHEADERSIZE_MIN;
-static const size_t ZSTD_frameHeaderSize_max = ZSTD_FRAMEHEADERSIZE_MAX;
-/* magic number + skippable frame length */
-static const size_t ZSTD_skippableHeaderSize = 8;
-
-
-/*-*************************************
- * Compressed size functions
- **************************************/
 
 /**
  * struct zstd_frame_params - zstd frame parameters stored in the frame header
