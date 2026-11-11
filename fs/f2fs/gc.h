@@ -34,6 +34,8 @@ struct f2fs_gc_kthread {
 
 	/* for changing gc mode */
 	unsigned int gc_wake;
+
+	wait_queue_head_t fggc_wq;
 };
 
 struct gc_inode_list {
