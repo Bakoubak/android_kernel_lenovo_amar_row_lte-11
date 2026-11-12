@@ -92,9 +92,15 @@ static const cParams_t k_clTable[LZ4HC_CLEVEL_MAX + 1] = {
 	{ lz4hc, 64, 16 }, /* 7 */
 	{ lz4hc, 128, 16 }, /* 8 */
 	{ lz4hc, 256, 16 }, /* 9 */
-	{ lz4opt, 96, 64 }, /*10==LZ4HC_CLEVEL_OPT_MIN*/
-	{ lz4opt, 512, 128 }, /*11 */
-	{ lz4opt, 16384, LZ4_OPT_NUM }, /* 12==LZ4HC_CLEVEL_MAX */
+	#ifdef __KERNEL__
+    { lz4hc, 512, 16 }, /* 10 */
+    { lz4hc, 1024, 16 }, /* 11 */
+    { lz4hc, 2048, 16 }, /* 12==LZ4HC_CLEVEL_MAX */
+	#else
+    { lz4opt, 96, 64 }, /*10==LZ4HC_CLEVEL_OPT_MIN*/
+    { lz4opt, 512, 128 }, /*11 */
+    { lz4opt, 16384, LZ4_OPT_NUM }, /* 12==LZ4HC_CLEVEL_MAX */
+	#endif
 };
 
 static cParams_t LZ4HC_getCLevelParams(int cLevel)
@@ -1799,26 +1805,36 @@ LZ4_FORCE_INLINE int LZ4HC_compress_generic_internal(
 	ctx->end += *srcSizePtr;
 	{
 		cParams_t const cParam = LZ4HC_getCLevelParams(cLevel);
+		#ifndef __KERNEL__
 		HCfavor_e const favor = ctx->favorDecSpeed ?
 						favorDecompressionSpeed :
 						favorCompressionRatio;
+		#endif
 		int result;
 
 		if (cParam.strat == lz4mid) {
 			result = LZ4MID_compress(ctx, src, dst, srcSizePtr,
 						 dstCapacity, limit, dict);
-		} else if (cParam.strat == lz4hc) {
-			result = LZ4HC_compress_hashChain(
-				ctx, src, dst, srcSizePtr, dstCapacity,
-				cParam.nbSearches, limit, dict);
-		} else {
-			assert(cParam.strat == lz4opt);
-			result = LZ4HC_compress_optimal(
-				ctx, src, dst, srcSizePtr, dstCapacity,
-				cParam.nbSearches, cParam.targetLength, limit,
-				cLevel >= LZ4HC_CLEVEL_MAX, /* ultra mode */
-				dict, favor);
-		}
+		#ifdef __KERNEL__
+        } else {
+            result = LZ4HC_compress_hashChain(
+                ctx, src, dst, srcSizePtr, dstCapacity,
+                cParam.nbSearches, limit, dict);
+        }
+		#else
+        } else if (cParam.strat == lz4hc) {
+            result = LZ4HC_compress_hashChain(
+                ctx, src, dst, srcSizePtr, dstCapacity,
+                cParam.nbSearches, limit, dict);
+        } else {
+            assert(cParam.strat == lz4opt);
+            result = LZ4HC_compress_optimal(
+                ctx, src, dst, srcSizePtr, dstCapacity,
+                cParam.nbSearches, cParam.targetLength, limit,
+                cLevel >= LZ4HC_CLEVEL_MAX, /* ultra mode */
+                dict, favor);
+        }
+		#endif
 		if (result <= 0)
 			ctx->dirty = 1;
 		return result;
