@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=$PWD/prebuilts/clang/host/linux-x86/clang-r383902/bin/:$PATH
+export PATH=$PWD/prebuilts/clang/host/linux-x86/ZyClang-16/bin/:$PATH
 export PATH=$PWD/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/:$PATH
 
 # Clean previous build and create output directory
