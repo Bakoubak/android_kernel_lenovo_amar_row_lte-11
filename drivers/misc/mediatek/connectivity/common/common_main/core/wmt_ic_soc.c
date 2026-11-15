@@ -44,6 +44,7 @@
 #include "stp_core.h"
 #include "mtk_wcn_consys_hw.h"
 #include "wmt_step.h"
+#include <linux/init.h>
 
 /*******************************************************************************
 *                              C O N S T A N T S
@@ -1514,7 +1515,7 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 		WMT_DBG_FUNC("init_coex ok\n");
 	}
 
-	if (wmt_ic_ops_soc.options & OPT_COEX_CONFIG_ADJUST) {
+	if (wmt_ic_ops_soc.options & OPT_COEX_CONFIG_ADJUST && !strstr(saved_command_line, "androidboot.hw_id=0")) {
 		WMT_INFO_FUNC("coex_config_bt_ctrl:0x%x\n", pWmtGenConf->coex_config_bt_ctrl);
 		coex_config_addjust_table[0].cmd[5] = pWmtGenConf->coex_config_bt_ctrl;
 		WMT_INFO_FUNC("coex_config_bt_ctrl_mode:0x%x\n", pWmtGenConf->coex_config_bt_ctrl_mode);

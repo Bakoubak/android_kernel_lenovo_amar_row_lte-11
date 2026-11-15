@@ -72,6 +72,7 @@
 #include <linux/of.h>
 #include <linux/of_irq.h>
 #include <linux/irqreturn.h>
+#include <linux/init.h>
 
 /*******************************************************************************
 *                              C O N S T A N T S
@@ -343,6 +344,10 @@ UINT32 wmt_plat_soc_co_clock_flag_get(VOID)
 
 static UINT32 wmt_plat_soc_co_clock_flag_set(UINT32 flag)
 {
+    if (strstr(saved_command_line, "androidboot.hw_id=0")) {
+        WMT_PLAT_PR_INFO("X306F: forcing co_clock_flags=0 because it causes kernel panics when enabled ! (was %u)\n", flag);
+        flag = 0;
+    }
 	gCoClockFlag = flag;
 	return 0;
 }
