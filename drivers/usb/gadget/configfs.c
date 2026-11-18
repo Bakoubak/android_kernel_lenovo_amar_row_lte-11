@@ -346,9 +346,11 @@ static ssize_t gadget_dev_desc_UDC_store(struct config_item *item,
 	mutex_lock(&gi->lock);
 
 	if (!strlen(name) || strcmp(name, "none") == 0) {
-		ret = unregister_gadget(gi);
-		if (ret)
-			goto err;
+	    if (gi->composite.gadget_driver.udc_name) {
+			ret = unregister_gadget(gi);
+			if (ret)
+				goto err;
+		}
 		kfree(name);
 	} else {
 		if (gi->composite.gadget_driver.udc_name) {
